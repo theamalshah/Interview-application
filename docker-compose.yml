@@ -1,0 +1,49 @@
+# Interview Application - Ticketing demo (SQL Server + Node API + Bootstrap UI)
+# Run: docker-compose up -d
+# First time: wait ~30–45 s (SQL Server + API). Then open http://localhost:3000
+
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: interview-sqlserver
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "InterviewApp_Str0ng!"
+      MSSQL_PID: "Developer"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "exit 0"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 30s
+
+  api:
+    image: node:20-alpine
+    container_name: interview-api
+    working_dir: /app
+    volumes:
+      - ./backend:/app
+      - ./frontend:/app/frontend
+      - api_node_modules:/app/node_modules
+    command: sh -c "npm install --omit=dev && node server.js"
+    environment:
+      DB_SERVER: sqlserver
+      DB_PORT: 1433
+      DB_USER: sa
+      DB_PASSWORD: "InterviewApp_Str0ng!"
+      DB_NAME: TicketingDemo
+      DB_ENCRYPT: "false"
+    ports:
+      - "3000:3000"
+    depends_on:
+      sqlserver:
+        condition: service_started
+    restart: on-failure
+
+volumes:
+  sqlserver_data:
+  api_node_modules:

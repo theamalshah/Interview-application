@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<!-- Ticketing demo – single page. Serve via http://localhost:3000. -->
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ticketing Platform Demo</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="styles.css" rel="stylesheet">
+</head>
+<body>
+  <div id="file-open-warning" class="d-none alert alert-warning text-center m-4" role="alert">
+    <strong>Open this app in your browser at:</strong><br>
+    <a href="http://localhost:3000">http://localhost:3000</a><br>
+    <small class="text-muted">Do not open the HTML file directly. Start the API first (see README), then visit the link above.</small>
+  </div>
+  <div id="app-content">
+  <nav class="navbar navbar-dark">
+    <div class="container">
+      <a class="navbar-brand" href="#"><i class="bi bi-ticket-perforated me-2"></i>Ticketing Platform Demo</a>
+    </div>
+  </nav>
+
+  <div class="container py-4">
+    <div class="hero">
+      <h1 class="h4 mb-2">What is this?</h1>
+      <p class="mb-1">This is a <strong>ticketing platform</strong> demo: <strong>events</strong> happen at <strong>venues</strong>, and customers buy <strong>tickets</strong>. Everything is stored in a <strong>SQL Server</strong> database.</p>
+      <p class="mb-0 small text-muted">
+        You can view upcoming events and venues, see recent ticket sales, add a new event, sell a ticket (booking), or import a list of events. One screen, one database.
+      </p>
+    </div>
+
+    <div id="stats-strip" class="stats-strip mb-4 d-none">
+      <span class="stats-item"><i class="bi bi-calendar-event me-1"></i><strong id="stats-events">0</strong> events</span>
+      <span class="stats-divider">·</span>
+      <span class="stats-item"><i class="bi bi-building me-1"></i><strong id="stats-venues">0</strong> venues</span>
+      <span class="stats-divider">·</span>
+      <span class="stats-item"><i class="bi bi-ticket me-1"></i><strong id="stats-tickets">0</strong> tickets</span>
+    </div>
+
+    <div class="card mb-4">
+      <div class="card-header bg-white d-flex align-items-center justify-content-between">
+        <h2 class="h6 mb-0"><i class="bi bi-calendar-event me-2"></i>Upcoming events</h2>
+        <button type="button" class="btn btn-sm btn-outline-secondary btn-refresh" id="refresh-events" title="Refresh"><i class="bi bi-arrow-clockwise"></i></button>
+      </div>
+      <div class="card-body">
+        <p class="section-desc">Concerts, games, shows — each at a venue with a date.</p>
+        <div id="events-loading" class="text-muted">Loading…</div>
+        <div id="events-error" class="text-danger small d-none"></div>
+        <div class="table-responsive table-scroll">
+          <table class="table table-sm table-hover mb-0 d-none" id="events-table">
+            <thead><tr><th>Event</th><th>Venue</th><th>Date</th><th>Status</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Ticket–Event module (interview: JOIN, GROUP BY, event–ticket relationship) -->
+    <div class="card mb-4 ticket-event-module">
+      <div class="card-header bg-white d-flex align-items-center justify-content-between">
+        <h2 class="h6 mb-0"><i class="bi bi-link-45deg me-2"></i>Events & ticket sales</h2>
+        <button type="button" class="btn btn-sm btn-outline-secondary btn-refresh" id="refresh-ticket-event" title="Refresh"><i class="bi bi-arrow-clockwise"></i></button>
+      </div>
+      <div class="card-body">
+        <p class="section-desc">Each event with total tickets sold and revenue (Event ↔ Ticket relationship, aggregated in the API with JOIN + GROUP BY).</p>
+        <div id="ticket-event-loading" class="text-muted">Loading…</div>
+        <div id="ticket-event-error" class="text-danger small d-none"></div>
+        <div id="ticket-event-content" class="d-none">
+          <div class="table-responsive table-scroll">
+            <table class="table table-sm table-hover mb-0" id="ticket-event-table">
+              <thead>
+                <tr>
+                  <th>Event</th>
+                  <th>Venue</th>
+                  <th>Date</th>
+                  <th class="text-end">Tickets sold</th>
+                  <th class="text-end">Revenue</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="ticket-event-tbody"></tbody>
+            </table>
+          </div>
+          <div id="ticket-event-detail" class="ticket-event-detail mt-3 d-none">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <h3 class="h6 mb-0">Tickets for <span id="ticket-event-detail-title"></span></h3>
+              <button type="button" class="btn btn-sm btn-link text-secondary p-0 ms-2" id="ticket-event-detail-close" aria-label="Close">
+                <i class="bi bi-x-lg"></i>
+              </button>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-sm table-hover mb-0">
+                <thead><tr><th>Customer</th><th>Qty</th><th>Total</th></tr></thead>
+                <tbody id="ticket-event-detail-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+      <!-- Venues -->
+      <div class="col-lg-6">
+        <div class="card h-100">
+          <div class="card-header bg-white d-flex align-items-center justify-content-between">
+            <h2 class="h6 mb-0"><i class="bi bi-building me-2"></i>Venues</h2>
+            <button type="button" class="btn btn-sm btn-outline-secondary btn-refresh" id="refresh-venues" title="Refresh"><i class="bi bi-arrow-clockwise"></i></button>
+          </div>
+          <div class="card-body">
+            <p class="section-desc">Where events take place.</p>
+            <div id="venues-loading" class="text-muted">Loading…</div>
+            <div id="venues-error" class="text-danger small d-none"></div>
+            <div class="table-scroll">
+              <table class="table table-sm table-hover mb-0 d-none" id="venues-table">
+                <thead><tr><th>Name</th><th>City</th><th>Capacity</th></tr></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Tickets -->
+      <div class="col-lg-6">
+        <div class="card h-100">
+          <div class="card-header bg-white d-flex align-items-center justify-content-between">
+            <h2 class="h6 mb-0"><i class="bi bi-ticket me-2"></i>Recent tickets</h2>
+            <button type="button" class="btn btn-sm btn-outline-secondary btn-refresh" id="refresh-tickets" title="Refresh"><i class="bi bi-arrow-clockwise"></i></button>
+          </div>
+          <div class="card-body">
+            <p class="section-desc">Ticket sales (event, customer, quantity, total).</p>
+            <div id="tickets-loading" class="text-muted">Loading…</div>
+            <div id="tickets-error" class="text-danger small d-none"></div>
+            <div class="table-scroll">
+              <table class="table table-sm table-hover mb-0 d-none" id="tickets-table">
+                <thead><tr><th>Event</th><th>Customer</th><th>Qty</th><th>Total</th></tr></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add event -->
+    <div class="card mb-4">
+      <div class="card-body">
+        <h2 class="h6 mb-3"><i class="bi bi-plus-circle me-2"></i>Add an event</h2>
+        <div class="row g-2 align-items-end">
+          <div class="col-12 col-sm-6 col-md-2">
+            <label class="form-label small mb-0">Venue</label>
+            <select class="form-select form-select-sm" id="event-venue">
+              <option value="1">Grand Arena</option>
+              <option value="2">Riverside Theatre</option>
+              <option value="3">Stadium North</option>
+            </select>
+          </div>
+          <div class="col-12 col-sm-6 col-md-3">
+            <label class="form-label small mb-0">Event title <span class="text-danger">*</span></label>
+            <input type="text" class="form-control form-control-sm" id="event-title" placeholder="e.g. Winter Concert 2026" required>
+          </div>
+          <div class="col-12 col-sm-6 col-md-2">
+            <label class="form-label small mb-0">Date & time <span class="text-danger">*</span></label>
+            <input type="datetime-local" class="form-control form-control-sm" id="event-date" required>
+          </div>
+          <div class="col-12 col-sm-6 col-md-2">
+            <button type="button" class="btn btn-primary btn-sm w-100" id="event-add">Add event</button>
+          </div>
+        </div>
+        <p id="event-message" class="small mt-2 mb-0"></p>
+      </div>
+    </div>
+
+    <!-- Sell a ticket -->
+    <div class="card mb-4">
+      <div class="card-body">
+        <h2 class="h6 mb-3"><i class="bi bi-ticket me-2"></i>Sell a ticket</h2>
+        <div class="row g-2 align-items-end">
+          <div class="col-12 col-sm-6 col-md-3">
+            <label class="form-label small mb-0">Event <span class="text-danger">*</span></label>
+            <select class="form-select form-select-sm" id="ticket-event" required></select>
+          </div>
+          <div class="col-12 col-sm-6 col-md-2">
+            <label class="form-label small mb-0">Customer name <span class="text-danger">*</span></label>
+            <input type="text" class="form-control form-control-sm" id="ticket-customer" placeholder="Name" required>
+          </div>
+          <div class="col-6 col-sm-4 col-md-1">
+            <label class="form-label small mb-0">Qty</label>
+            <input type="number" class="form-control form-control-sm" id="ticket-qty" value="1" min="1">
+          </div>
+          <div class="col-6 col-sm-4 col-md-2">
+            <label class="form-label small mb-0">Total (£) <span class="text-danger">*</span></label>
+            <input type="number" class="form-control form-control-sm" id="ticket-total" placeholder="0.00" step="0.01" min="0" required>
+          </div>
+          <div class="col-12 col-sm-4 col-md-2">
+            <button type="button" class="btn btn-outline-primary btn-sm w-100" id="ticket-add">Sell ticket</button>
+          </div>
+        </div>
+        <p id="ticket-message" class="small mt-2 mb-0"></p>
+      </div>
+    </div>
+
+    <!-- Import events (ETL) -->
+    <div class="card">
+      <div class="card-body import-panel">
+        <h2 class="h6 mb-2"><i class="bi bi-upload me-2"></i>Import events (ETL)</h2>
+        <p class="small text-muted mb-2">Paste a JSON list of events (each: venueId 1–3, title, eventDate). Click the button to add them to the database.</p>
+        <div class="row g-2">
+          <div class="col-12 col-lg-6">
+            <textarea class="form-control font-monospace small" id="import-input" rows="5">[
+  { "venueId": 1, "title": "New Concert 2026", "eventDate": "2026-10-01T19:00:00" },
+  { "venueId": 2, "title": "Theatre Night", "eventDate": "2026-11-15T20:00:00" }
+]</textarea>
+            <div class="d-flex flex-wrap align-items-center gap-2 mt-2">
+              <button type="button" class="btn btn-outline-primary btn-sm" id="import-btn">Import these events</button>
+              <span id="import-result" class="small"></span>
+            </div>
+          </div>
+          <div class="col-12 col-lg-6">
+            <label class="form-label small">Result</label>
+            <pre class="bg-white border rounded p-2 small mb-0 overflow-auto" id="import-response">—</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <p class="small text-muted mt-4 mb-4">
+      <strong>Data:</strong> SQL Server database with tables <strong>Venues</strong>, <strong>Events</strong>, <strong>Tickets</strong>. Node.js API uses T-SQL. Docker runs SQL Server and the API.
+    </p>
+  </div>
+  </div>
+
+  <!-- Success toast container (popups) -->
+  <div id="toast-container" class="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

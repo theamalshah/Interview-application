@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interview Prep Guide – Technical Solutions Expert</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Source Sans 3', sans-serif;
+      line-height: 1.6;
+      color: #1a1a2e;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 40px 24px;
+      background: #fff;
+    }
+    @media print {
+      body { padding: 20px; }
+      .no-print { display: none !important; }
+      h2 { page-break-after: avoid; }
+      .section { page-break-inside: avoid; }
+    }
+    h1 {
+      font-size: 1.75rem;
+      color: #16213e;
+      border-bottom: 3px solid #0f3460;
+      padding-bottom: 10px;
+      margin-bottom: 8px;
+    }
+    .subtitle { color: #555; font-size: 0.95rem; margin-bottom: 28px; }
+    h2 {
+      font-size: 1.25rem;
+      color: #0f3460;
+      margin-top: 32px;
+      margin-bottom: 12px;
+    }
+    h3 { font-size: 1.05rem; color: #16213e; margin-top: 20px; margin-bottom: 8px; }
+    code, .code {
+      font-family: 'JetBrains Mono', monospace;
+      background: #f0f4f8;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.88em;
+    }
+    pre {
+      font-family: 'JetBrains Mono', monospace;
+      background: #1a1a2e;
+      color: #e8e8e8;
+      padding: 14px;
+      border-radius: 6px;
+      overflow-x: auto;
+      font-size: 0.85rem;
+      line-height: 1.45;
+    }
+    pre code { background: none; padding: 0; color: inherit; }
+    .qa { margin: 16px 0; padding: 12px; background: #f8fafc; border-left: 4px solid #0f3460; border-radius: 0 6px 6px 0; }
+    .qa q { font-weight: 600; color: #16213e; }
+    .qa p { margin: 6px 0 0 0; }
+    .tip { background: #e8f4f8; padding: 10px 14px; border-radius: 6px; margin: 12px 0; font-size: 0.92rem; }
+    .no-print { background: #fffbeb; padding: 12px; border-radius: 6px; margin-bottom: 24px; border: 1px solid #fcd34d; }
+    ul { margin: 8px 0; padding-left: 22px; }
+    li { margin: 4px 0; }
+    strong { color: #0f3460; }
+    table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 0.9rem; }
+    th, td { border: 1px solid #cbd5e1; padding: 8px 12px; text-align: left; }
+    th { background: #0f3460; color: #fff; }
+    tr:nth-child(even) { background: #f8fafc; }
+  </style>
+</head>
+<body>
+  <div class="no-print">
+    <strong>📄 Save as PDF:</strong> Press <kbd>Ctrl</kbd>+<kbd>P</kbd> (or <kbd>Cmd</kbd>+<kbd>P</kbd> on Mac) → Choose "Save as PDF" → Print.
+  </div>
+
+  <h1>Interview Prep Guide – Technical Solutions Expert</h1>
+  <p class="subtitle">JavaScript, T-SQL, Node.js, SQL Server, ETL, DOM & Role-Specific Topics • Second Round Interview</p>
+
+  <!-- ========== JAVASCRIPT ========== -->
+  <h2>1. JavaScript Core Concepts</h2>
+
+  <h3>1.1 Closures</h3>
+  <p>A <strong>closure</strong> is when a function "remembers" variables from its outer scope even after that scope has finished. The inner function has access to the outer function's variables.</p>
+  <pre><code>function createCounter() {
+  let count = 0;  // "closed over" by the inner function
+  return function () {
+    count++;
+    return count;
+  };
+}
+const counter = createCounter();
+console.log(counter()); // 1
+console.log(counter()); // 2 – count is remembered!</code></pre>
+  <p><strong>Use cases:</strong> Data privacy, factory functions, callbacks, event handlers, partial application.</p>
+
+  <h3>1.2 Promises</h3>
+  <p>A <strong>Promise</strong> represents a value that may be available now, later, or never. It has 3 states: <code>pending</code>, <code>fulfilled</code>, <code>rejected</code>.</p>
+  <pre><code>const p = new Promise((resolve, reject) => {
+  setTimeout(() => resolve('done'), 1000);
+  // or: reject(new Error('failed'));
+});
+// Consume with .then() / .catch()
+p.then(result => console.log(result))
+ .catch(err => console.error(err));</code></pre>
+
+  <h3>1.3 .then() and .catch()</h3>
+  <p><code>.then(onFulfilled, onRejected)</code> runs when the promise settles. <code>.catch(onRejected)</code> handles rejections. Both return <strong>new promises</strong>, enabling chaining.</p>
+  <pre><code>fetch('/api/events')
+  .then(res => res.json())
+  .then(data => console.log(data))
+  .catch(err => console.error('Failed:', err));</code></pre>
+
+  <h3>1.4 async/await</h3>
+  <p><code>async</code> makes a function return a Promise. <code>await</code> pauses until the Promise settles. Use <code>try/catch</code> for error handling.</p>
+  <pre><code>async function loadEvents() {
+  try {
+    const res = await fetch('/api/events');
+    if (!res.ok) throw new Error(res.status);
+    const data = await res.json();
+    return data;
+  } catch (e) {
+    console.error(e);
+  }
+}</code></pre>
+  <p><strong>Why prefer async/await?</strong> Cleaner code, easier to read, natural error flow with try/catch.</p>
+
+  <h3>1.5 OOP in JavaScript – Detailed Concepts</h3>
+
+  <p><strong>Four pillars of OOP:</strong></p>
+  <ul>
+    <li><strong>Encapsulation:</strong> Bundling data and methods together; hiding internal state. In JS, use private fields (<code>#field</code>) or closure for privacy.</li>
+    <li><strong>Inheritance:</strong> Child class gets parent's properties/methods. In JS: <code>extends</code> and prototype chain.</li>
+    <li><strong>Polymorphism:</strong> Same interface, different behavior. Override methods in child; call <code>super.method()</code> to invoke parent.</li>
+    <li><strong>Abstraction:</strong> Hide complexity; expose only what's needed. Abstract base classes or interfaces define contracts.</li>
+  </ul>
+
+  <p><strong>Class syntax & constructor:</strong></p>
+  <pre><code>class Ticket {
+  constructor(eventId, customerName, quantity) {
+    this.eventId = eventId;       // instance property
+    this.customerName = customerName;
+    this.quantity = quantity;
+  }
+  getTotal(pricePerTicket) {      // instance method
+    return this.quantity * pricePerTicket;
+  }
+  static validateQty(q) {         // static – called on class, not instance
+    return Number.isInteger(q) && q > 0;
+  }
+}</code></pre>
+
+  <p><strong>Inheritance & super:</strong></p>
+  <pre><code>class VIPTicket extends Ticket {
+  constructor(eventId, customerName, quantity, loungeAccess) {
+    super(eventId, customerName, quantity);  // must call super() first!
+    this.loungeAccess = loungeAccess;
+  }
+  getTotal(pricePerTicket) {      // method override (polymorphism)
+    const base = super.getTotal(pricePerTicket);
+    return base * 1.2;            // 20% VIP surcharge
+  }
+}</code></pre>
+
+  <p><strong>Private fields (ES2022):</strong> Use <code>#</code> for truly private data.</p>
+  <pre><code>class SecureTicket {
+  #secretId;  // private – not accessible outside class
+  constructor(id) { this.#secretId = id; }
+  getId() { return this.#secretId; }  // controlled access
+}</code></pre>
+
+  <p><strong>Getters & setters:</strong></p>
+  <pre><code>class Event {
+  constructor(title) { this._title = title; }
+  get title() { return this._title; }
+  set title(val) { this._title = String(val).trim(); }
+}</code></pre>
+
+  <p><strong>Prototypes (under the hood):</strong> JS uses prototype-based inheritance. <code>Object.getPrototypeOf(obj)</code>, <code>obj.hasOwnProperty('x')</code>. Classes are syntactic sugar over constructors + prototypes.</p>
+
+  <h3>1.6 DOM (Document Object Model)</h3>
+  <p>The DOM is the tree representation of HTML. Key APIs:</p>
+  <table>
+    <tr><th>Method</th><th>Purpose</th></tr>
+    <tr><td><code>document.getElementById(id)</code></td><td>Get element by ID</td></tr>
+    <tr><td><code>document.querySelector(selector)</code></td><td>First match (CSS selector)</td></tr>
+    <tr><td><code>document.querySelectorAll(selector)</code></td><td>All matches</td></tr>
+    <tr><td><code>element.textContent</code></td><td>Get/set text (safe from XSS)</td></tr>
+    <tr><td><code>element.innerHTML</code></td><td>Get/set HTML (use carefully – XSS risk)</td></tr>
+    <tr><td><code>element.classList.add/remove/toggle</code></td><td>CSS class manipulation</td></tr>
+    <tr><td><code>element.addEventListener('click', fn)</code></td><td>Attach event listener</td></tr>
+    <tr><td><code>document.createElement('div')</code></td><td>Create new element</td></tr>
+  </table>
+  <p><strong>Event bubbling:</strong> Events propagate from child → parent. Use <code>event.stopPropagation()</code> to stop.</p>
+
+  <!-- ========== T-SQL ========== -->
+  <h2>2. T-SQL (Transact-SQL) – SQL Server</h2>
+
+  <h3>2.1 Basics</h3>
+  <ul>
+    <li><strong>SELECT:</strong> <code>SELECT Id, Name, City FROM dbo.Venues WHERE Capacity &gt; 1000;</code></li>
+    <li><strong>INSERT:</strong> <code>INSERT INTO dbo.Events (VenueId, Title, EventDate, Status) VALUES (1, 'Concert', '2026-03-15', 'OnSale');</code></li>
+    <li><strong>UPDATE:</strong> <code>UPDATE dbo.Events SET Status = 'SoldOut' WHERE Id = 5;</code></li>
+    <li><strong>DELETE:</strong> <code>DELETE FROM dbo.Tickets WHERE EventId = 3;</code></li>
+  </ul>
+
+  <h3>2.2 JOINs</h3>
+  <table>
+    <tr><th>Type</th><th>Description</th></tr>
+    <tr><td>INNER JOIN</td><td>Only matching rows from both tables</td></tr>
+    <tr><td>LEFT JOIN</td><td>All from left, matching from right (NULL if no match)</td></tr>
+    <tr><td>RIGHT JOIN</td><td>All from right, matching from left</td></tr>
+    <tr><td>FULL OUTER JOIN</td><td>All from both, NULL where no match</td></tr>
+  </table>
+  <pre><code>SELECT e.Title, v.Name AS VenueName, v.City
+FROM dbo.Events e
+INNER JOIN dbo.Venues v ON e.VenueId = v.Id
+ORDER BY e.EventDate;</code></pre>
+
+  <h3>2.3 Aggregates & GROUP BY</h3>
+  <pre><code>SELECT EventId, COUNT(*) AS TicketCount, SUM(Total) AS Revenue
+FROM dbo.Tickets
+GROUP BY EventId
+HAVING COUNT(*) &gt; 10;</code></pre>
+
+  <h3>2.4 Stored Procedures</h3>
+  <pre><code>CREATE PROCEDURE dbo.AddEvent
+  @VenueId INT,
+  @Title NVARCHAR(300),
+  @EventDate DATETIME2
+AS
+BEGIN
+  INSERT INTO dbo.Events (VenueId, Title, EventDate, Status)
+  VALUES (@VenueId, @Title, @EventDate, 'OnSale');
+  SELECT SCOPE_IDENTITY() AS NewId;
+END;</code></pre>
+
+  <h3>2.5 Indexes</h3>
+  <p>Speed up reads; slow down writes. Use on foreign keys and frequently filtered/sorted columns.</p>
+  <pre><code>CREATE INDEX IX_Events_VenueId ON dbo.Events(VenueId);
+CREATE INDEX IX_Events_EventDate ON dbo.Events(EventDate);</code></pre>
+
+  <h3>2.6 Transactions</h3>
+  <pre><code>BEGIN TRANSACTION;
+BEGIN TRY
+  INSERT INTO dbo.Tickets (...) VALUES (...);
+  UPDATE dbo.Events SET Status = 'SoldOut' WHERE Id = @EventId;
+  COMMIT TRANSACTION;
+END TRY
+BEGIN CATCH
+  ROLLBACK TRANSACTION;
+  THROW;
+END CATCH;</code></pre>
+
+  <!-- ========== INTERVIEW QUESTIONS ========== -->
+  <h2>3. JavaScript Interview Questions (Detailed)</h2>
+
+  <div class="qa"><q>What is a closure and when would you use one?</q>
+  <p><strong>Definition:</strong> A closure is when an inner function retains access to variables from its outer (lexical) scope even after the outer function has finished executing. The inner function "closes over" those variables.</p>
+  <p><strong>Use cases:</strong> (1) <strong>Data privacy</strong> – create private variables; (2) <strong>Factory functions</strong> – e.g. createCounter(); (3) <strong>Callbacks & event handlers</strong> – handlers remember context; (4) <strong>Partial application</strong> – fix some arguments. Example: a module pattern that exposes only certain methods while keeping internal state hidden.</p></div>
+
+  <div class="qa"><q>Difference between var, let, and const?</q>
+  <p><strong>var:</strong> Function-scoped (or global). Hoisted – declaration is moved to top, so you can use before declare (undefined). Can be redeclared. No block scope in loops.</p>
+  <p><strong>let:</strong> Block-scoped. Hoisted but in "temporal dead zone" until declaration. Cannot redeclare in same scope. Preferred for variables that change.</p>
+  <p><strong>const:</strong> Block-scoped, must be initialized at declaration. Cannot reassign. For objects/arrays, the reference is fixed but properties can be mutated. Preferred by default; use let when reassignment is needed.</p></div>
+
+  <div class="qa"><q>Promises vs async/await – which do you prefer?</q>
+  <p><strong>Promises:</strong> Explicit .then()/.catch() chaining. Good for single async operations. Can use Promise.all(), Promise.race().</p>
+  <p><strong>async/await:</strong> Syntactic sugar over Promises. Makes async code look synchronous. Use try/catch for errors. Easier to read and debug when you have multiple sequential awaits. Under the hood, async functions return Promises.</p>
+  <p><strong>Preference:</strong> async/await for readability and linear flow. Use Promise.all() when running parallel async operations.</p></div>
+
+  <div class="qa"><q>What is the event loop?</q>
+  <p>JavaScript is single-threaded. The event loop allows async behavior without blocking. Order of execution:</p>
+  <p><strong>1. Call stack</strong> – executes sync code. <strong>2. Microtask queue</strong> (higher priority) – Promises, queueMicrotask. Runs after current task, before next macrotask. <strong>3. Macrotask queue</strong> – setTimeout, setInterval, I/O callbacks. One macrotask per loop iteration.</p>
+  <p>When the call stack is empty, the engine processes microtasks first, then one macrotask, repeat. This is why <code>Promise.then</code> runs before <code>setTimeout</code> even if both are queued.</p></div>
+
+  <div class="qa"><q>How do you prevent XSS when rendering user input?</q>
+  <p><strong>XSS (Cross-Site Scripting):</strong> Attacker injects malicious scripts that run in victims' browsers.</p>
+  <p><strong>Prevention:</strong> (1) Use <code>textContent</code> instead of <code>innerHTML</code> – escapes everything. (2) If HTML is needed, sanitize with a library (DOMPurify). (3) Escape before insert: create a text node or use a helper that HTML-encodes &lt; &gt; &amp; &quot; &#39;. (4) Set Content-Security-Policy headers. (5) Never concatenate user input into HTML strings.</p></div>
+
+  <div class="qa"><q>Explain this, bind, call, and apply.</q>
+  <p><strong>this:</strong> Determined by how the function is called, not where it's defined. In a method: <code>obj</code>. In strict mode standalone: <code>undefined</code>. Arrow functions inherit <code>this</code> from enclosing scope (lexical this).</p>
+  <p><strong>bind(thisArg, ...args):</strong> Returns a new function with <code>this</code> permanently fixed. Used when passing a method as callback.</p>
+  <p><strong>call(thisArg, arg1, arg2, ...):</strong> Invokes the function immediately with given <code>this</code> and arguments.</p>
+  <p><strong>apply(thisArg, [args]):</strong> Same as call but arguments as array. Useful when you have an array of args.</p></div>
+
+  <div class="qa"><q>What is hoisting?</q>
+  <p>During compilation, variable and function declarations are "hoisted" to the top of their scope. <code>var</code> declarations are hoisted (value undefined until assignment). <code>function</code> declarations are fully hoisted (can call before declare). <code>let</code> and <code>const</code> are hoisted but in a "temporal dead zone" – accessing before declaration throws ReferenceError.</p></div>
+
+  <div class="qa"><q>What is event delegation and why use it?</q>
+  <p><strong>Event delegation:</strong> Attach a single listener on a parent instead of many on children. Events bubble up; check <code>event.target</code> to identify the clicked child.</p>
+  <p><strong>Benefits:</strong> Fewer listeners (less memory), works for dynamically added children, simpler for lists/tables. Example: one click handler on <code>&lt;ul&gt;</code> for many <code>&lt;li&gt;</code> items.</p></div>
+
+  <div class="qa"><q>Explain map, filter, and reduce.</q>
+  <p><strong>map(callback):</strong> Returns new array; each element transformed by callback. Same length.</p>
+  <p><strong>filter(callback):</strong> Returns new array; keeps elements where callback returns true.</p>
+  <p><strong>reduce(callback, initial):</strong> Single value from array. callback(accumulator, current, index, arr). Use for sum, flatten, grouping.</p></div>
+
+  <div class="qa"><q>Difference between null and undefined?</q>
+  <p><strong>undefined:</strong> Variable declared but not assigned; missing property; function with no return. Type of undefined is "undefined".</p>
+  <p><strong>null:</strong> Intentional absence of value. Assigned explicitly. Type of null is "object" (historical bug). Use null when you want to represent "no value" deliberately.</p></div>
+
+  <div class="qa"><q>== vs === – when to use each?</q>
+  <p><strong>=== (strict equality):</strong> No type coercion. Compares value and type. <code>5 === "5"</code> is false. Preferred in modern JS.</p>
+  <p><strong>== (loose equality):</strong> Type coercion before comparison. <code>5 == "5"</code> is true. Can produce surprising results. Avoid unless you need coercion (e.g. checking for null/undefined together: <code>x == null</code> catches both).</p></div>
+
+  <div class="qa"><q>What is callback hell and how do you avoid it?</q>
+  <p>Callback hell: Nested callbacks for sequential async operations, leading to deeply indented, hard-to-read code.</p>
+  <p><strong>Solutions:</strong> (1) Use async/await – linear, readable flow. (2) Use Promises with .then() chaining. (3) Extract named functions instead of inline callbacks. (4) Use async libraries (e.g. async.waterfall) for complex flows.</p></div>
+
+  <h2>4. OOP Interview Questions</h2>
+
+  <div class="qa"><q>Explain the four pillars of OOP.</q>
+  <p><strong>Encapsulation:</strong> Bundling data and methods; hiding internal state. Protects data integrity; exposes only what's necessary via getters/methods.</p>
+  <p><strong>Inheritance:</strong> Child class reuses parent's properties/methods. Reduces duplication; establishes "is-a" relationship (VIPTicket is a Ticket).</p>
+  <p><strong>Polymorphism:</strong> Same interface, different implementations. Override methods in subclasses; callers use base type. Enables flexible, extensible code.</p>
+  <p><strong>Abstraction:</strong> Hide complexity; show only essential features. Abstract classes or interfaces define contracts without implementation.</p></div>
+
+  <div class="qa"><q>Difference between classical and prototypal inheritance?</q>
+  <p><strong>Classical (Java, C#):</strong> Classes are blueprints; instances are created from classes. Inheritance is class-based.</p>
+  <p><strong>Prototypal (JavaScript):</strong> Objects inherit directly from other objects via prototype chain. No classes (until ES6 class sugar). <code>Object.create(proto)</code> creates object with given prototype. JS class syntax compiles down to constructors + prototypes.</p></div>
+
+  <div class="qa"><q>When to use composition vs inheritance?</q>
+  <p><strong>Inheritance:</strong> "Is-a" relationship (Dog is an Animal). Use when subclasses are true subtypes with shared behavior.</p>
+  <p><strong>Composition:</strong> "Has-a" relationship. Favor composition over inheritance – inject dependencies, use smaller objects. More flexible; avoids deep hierarchies and fragile base classes. Example: Engine has-a FuelInjector rather than extending it.</p></div>
+
+  <h2>5. T-SQL Interview Questions</h2>
+
+  <div class="qa"><q>INNER JOIN vs LEFT JOIN – when to use each?</q>
+  <p><strong>INNER JOIN:</strong> Returns only rows where there is a match in both tables. Excludes rows with no match. Use when you need data from both tables and missing matches are not acceptable (e.g. events with their venues – no venue means exclude event).</p>
+  <p><strong>LEFT JOIN:</strong> Returns all rows from left table; right side is NULL when no match. Use when you want to keep all left rows and optionally include right data (e.g. all events with ticket counts – events with zero tickets still appear).</p></div>
+
+  <div class="qa"><q>What is an index and when would you create one?</q>
+  <p>An index is a data structure (B-tree typically) that speeds up lookups. SQL Server uses it for WHERE, JOIN, ORDER BY.</p>
+  <p><strong>Create indexes on:</strong> Foreign keys, columns frequently in WHERE/JOIN, columns in ORDER BY. Consider covering index (INCLUDE) to avoid key lookups.</p>
+  <p><strong>Avoid excess:</strong> Each index slows INSERT/UPDATE/DELETE (must update index). Clustered index defines physical order (usually PK); one per table. Non-clustered indexes are separate structures.</p></div>
+
+  <div class="qa"><q>Difference between WHERE and HAVING?</q>
+  <p><strong>WHERE:</strong> Filters individual rows <em>before</em> grouping. Cannot use aggregate functions. Applied to source data.</p>
+  <p><strong>HAVING:</strong> Filters groups <em>after</em> GROUP BY. Can use aggregates (COUNT, SUM, etc.). Example: <code>HAVING COUNT(*) &gt; 10</code> keeps only groups with more than 10 rows. You can use both: WHERE filters rows first, then GROUP BY, then HAVING filters groups.</p></div>
+
+  <div class="qa"><q>What are stored procedures and why use them?</q>
+  <p>Stored procedures are precompiled SQL stored in the database. Benefits: <strong>Security</strong> – parameterized, reduces SQL injection; <strong>Performance</strong> – execution plan cached; <strong>Encapsulation</strong> – business logic in one place; <strong>Maintainability</strong> – change without redeploying app. Use <code>EXEC dbo.ProcName @param = value</code>.</p></div>
+
+  <div class="qa"><q>Explain ACID properties.</q>
+  <p><strong>Atomicity:</strong> All operations in a transaction succeed or all fail. No partial commits.</p>
+  <p><strong>Consistency:</strong> Database moves from one valid state to another. Constraints (FK, check) are maintained.</p>
+  <p><strong>Isolation:</strong> Concurrent transactions don't see each other's uncommitted changes. Isolation levels control visibility (Read Uncommitted, Read Committed, Repeatable Read, Serializable).</p>
+  <p><strong>Durability:</strong> Committed data survives crashes. Written to durable storage (transaction log).</p></div>
+
+  <div class="qa"><q>What is a transaction and when do you use one?</q>
+  <p>A transaction groups multiple statements into a single unit of work. Use when operations must be atomic: e.g. insert ticket + deduct inventory, or transfer money between accounts. Use BEGIN TRANSACTION, COMMIT on success, ROLLBACK on error. Wrap in TRY/CATCH for proper error handling.</p></div>
+
+  <div class="qa"><q>How do you prevent SQL injection?</q>
+  <p><strong>Never</strong> concatenate user input into SQL strings. Use <strong>parameterized queries</strong> (prepared statements): placeholders like <code>@userId</code>, pass values separately. The driver escapes/sanitizes. In Node.js mssql: <code>pool.request().input('id', id).query('SELECT * FROM Users WHERE Id = @id')</code>. Stored procedures with parameters also prevent injection.</p></div>
+
+  <div class="qa"><q>Difference between TRUNCATE and DELETE?</q>
+  <p><strong>DELETE:</strong> Row-by-row; can have WHERE; fires triggers; can be rolled back; slower for large tables.</p>
+  <p><strong>TRUNCATE:</strong> Removes all rows by deallocating data pages; no WHERE; doesn't fire row triggers; resets IDENTITY; faster; requires ALTER permission on table. Use TRUNCATE when wiping entire table.</p></div>
+
+  <div class="qa"><q>What is a CTE (Common Table Expression)?</q>
+  <p>A named temporary result set within a single statement. Syntax: <code>WITH cte AS (SELECT ...) SELECT * FROM cte</code>. Use for readability, recursion (recursive CTE), or breaking complex queries into steps. Does not create a stored object; exists only for the duration of the query. Alternative to subqueries or temp tables in many cases.</p></div>
+
+  <div class="qa"><q>Primary key vs unique key?</q>
+  <p><strong>Primary key:</strong> Uniquely identifies each row; one per table; cannot be NULL; creates clustered index by default; used for relationships.</p>
+  <p><strong>Unique key:</strong> Enforces uniqueness; can have multiple per table; allows one NULL (in SQL Server, one NULL per column); creates nonclustered index. Use for columns that must be unique but are not the main identifier (e.g. email, username).</p></div>
+
+  <div class="qa"><q>What is connection pooling and why use it?</q>
+  <p>Connection pooling reuses database connections instead of creating new ones for each request. Creating a connection is expensive (TCP handshake, auth, etc.). A pool maintains a set of open connections; when a request needs one, it checks out from the pool and returns it when done. In Node.js mssql, <code>sql.connect(config)</code> creates a pool by default. Configure pool size (min, max) based on load. Reduces latency and resource usage.</p></div>
+
+  <h2>6. Node.js Interview Questions</h2>
+
+  <div class="qa"><q>How does Node.js handle async I/O?</q>
+  <p>Node is single-threaded but uses non-blocking I/O. The <strong>event loop</strong> (libuv) manages async operations: file system, network, timers. When I/O is requested, it's offloaded to the OS or a thread pool; the main thread continues. When I/O completes, the callback is queued and runs. This allows handling many concurrent connections without blocking. For CPU-intensive work, use worker threads or child processes.</p></div>
+
+  <div class="qa"><q>What is the difference between require and import?</q>
+  <p><strong>require (CommonJS):</strong> Synchronous; loads at runtime. <code>const x = require('./mod')</code>. Returns module.exports. Used in older Node and many npm packages.</p>
+  <p><strong>import (ES Modules):</strong> Static; analyzed at parse time. <code>import x from './mod.js'</code>. Supports tree-shaking (unused code elimination). Use <code>"type": "module"</code> in package.json or .mjs extension. Top-level await supported. Cannot mix require/import in same file (unless dynamic import()).</p></div>
+
+  <div class="qa"><q>How do you connect Node.js to SQL Server?</q>
+  <p>Use <code>mssql</code> or <code>tedious</code> package. Create a config object: server, port (1433), user, password, database, options (encrypt, trustServerCertificate). Use <strong>connection pooling</strong> for production – reuse connections. Example: <code>const pool = await sql.connect(config)</code>. For queries: <code>pool.request().input('id', sql.Int, id).query('SELECT * FROM Events WHERE Id = @id')</code>. Always use parameterized queries to prevent SQL injection.</p></div>
+
+  <div class="qa"><q>What is middleware in Express?</q>
+  <p>Middleware are functions with signature <code>(req, res, next)</code>. They run in order between receiving the request and sending the response. Examples: <code>express.json()</code> parses JSON body; <code>express.static()</code> serves files; auth middleware checks tokens; logging records requests. Call <code>next()</code> to pass to next middleware; omit to end the chain. <code>next(err)</code> triggers error handlers. Order matters – put auth before protected routes.</p></div>
+
+  <div class="qa"><q>What is a REST API? Common HTTP methods?</q>
+  <p>REST (Representational State Transfer) uses HTTP for CRUD. <strong>GET</strong> – read (idempotent); <strong>POST</strong> – create; <strong>PUT</strong> – full replace; <strong>PATCH</strong> – partial update; <strong>DELETE</strong> – remove. Use proper status codes: 200 OK, 201 Created, 400 Bad Request, 404 Not Found, 500 Server Error. Resources are nouns (e.g. /api/events, /api/tickets). Stateless – no session on server.</p></div>
+
+  <div class="qa"><q>What is CORS and when do you need it?</q>
+  <p><strong>CORS (Cross-Origin Resource Sharing):</strong> Browser security blocks requests from one origin (e.g. https://app.com) to another (e.g. https://api.com) unless the server allows it. The server sends <code>Access-Control-Allow-Origin</code> header. For APIs consumed by web apps on different domains, enable CORS. In Express: <code>app.use(cors())</code> or configure specific origins. Preflight OPTIONS requests are sent for non-simple requests.</p></div>
+
+  <h2>7. SQL Server & Windows Server Questions</h2>
+
+  <div class="qa"><q>What SQL Server versions have you used?</q>
+  <p>Be ready to mention 2012, 2016, 2019, 2022. <strong>2012:</strong> AlwaysOn Availability Groups, columnstore indexes. <strong>2016:</strong> Query Store (troubleshoot regressions), JSON functions, Dynamic Data Masking. <strong>2019:</strong> Intelligent Query Processing, UTF-8 support. <strong>2022:</strong> Ledger tables (immutable audit), improved security.</p></div>
+
+  <div class="qa"><q>How do you secure SQL Server in production?</q>
+  <p><strong>Authentication:</strong> Use Windows Auth or SQL Auth with strong passwords. Avoid sa; create least-privilege accounts. <strong>Encryption:</strong> TLS for connections; Transparent Data Encryption (TDE) for data at rest. <strong>Network:</strong> Firewall rules; don't expose 1433 publicly. <strong>Application:</strong> Parameterized queries only; no dynamic SQL with user input. <strong>Audit:</strong> Enable audit logging; monitor failed logins. <strong>Updates:</strong> Apply patches regularly.</p></div>
+
+  <div class="qa"><q>What is DNS and how does it relate to domains?</q>
+  <p><strong>DNS (Domain Name System):</strong> Hierarchical system that resolves domain names (e.g. www.example.com) to IP addresses. Types of records: <strong>A</strong> – hostname to IPv4; <strong>AAAA</strong> – to IPv6; <strong>CNAME</strong> – alias to another name; <strong>MX</strong> – mail server; <strong>TXT</strong> – text/verification. Domains are configured at registrars; DNS servers (authoritative, recursive) resolve queries. TTL controls caching duration.</p></div>
+
+  <div class="qa"><q>Basic TCP/IP concepts?</q>
+  <p><strong>IP:</strong> Internet Protocol – addresses (IPv4, IPv6) identify hosts. <strong>TCP:</strong> Transmission Control Protocol – connection-oriented, reliable, ordered delivery. Three-way handshake. Used for HTTP, HTTPS, SQL Server. <strong>UDP:</strong> Connectionless, no guarantees; used for DNS, streaming. <strong>Ports:</strong> 0–65535; identify services. Common: 80 (HTTP), 443 (HTTPS), 1433 (SQL Server), 22 (SSH), 25 (SMTP). <strong>Subnet/CIDR:</strong> Define network boundaries.</p></div>
+
+  <h2>8. ETL, Compliance & Preferred Skills</h2>
+
+  <div class="qa"><q>What is ETL?</q>
+  <p><strong>Extract:</strong> Pull data from sources – databases, APIs, files (CSV, JSON, XML). Handle pagination, incremental loads.</p>
+  <p><strong>Transform:</strong> Clean (nulls, duplicates), validate, map (rename, convert types), aggregate, enrich. Business rules applied here.</p>
+  <p><strong>Load:</strong> Write to destination – typically data warehouse or staging. Full load vs incremental. Use bulk insert for performance.</p>
+  <p>Used in data warehousing, BI, data integration. Tools: SSIS, Azure Data Factory, custom scripts (Node, Python).</p></div>
+  <div class="qa"><q>How would you implement a simple ETL in Node.js?</q>
+  <p><strong>Extract:</strong> <code>fetch()</code> from API or <code>fs.readFile</code> for files. For large data, stream with <code>createReadStream</code>.</p>
+  <p><strong>Transform:</strong> Parse JSON/CSV; validate required fields; map to target schema; filter invalid rows; handle dates/numbers.</p>
+  <p><strong>Load:</strong> Use <code>mssql</code> with parameterized bulk insert. Batch (e.g. 1000 rows) to avoid memory issues. Wrap in transaction; rollback on error. Consider table-valued parameters for large inserts.</p></div>
+  <div class="qa"><q>What are PCI and PA-DSS?</q>
+  <p><strong>PCI DSS:</strong> Applies to organizations that store, process, or transmit cardholder data. Requirements: encrypt data in transit (TLS) and at rest; restrict access; maintain firewalls; use anti-malware; secure development; monitor access.</p>
+  <p><strong>PA-DSS:</strong> For vendors of payment applications. Ensures software does not store sensitive auth data (CVV, full mag stripe); uses secure coding; supports PCI DSS compliance. Now part of PCI Software Security Framework.</p></div>
+  <div class="qa"><q>Experience with IIS?</q><p>Internet Information Services: Microsoft’s web server for Windows. Hosts ASP.NET, classic ASP, static files, PHP. <strong>App Pools:</strong> Isolate applications; set identity, recycle settings. <strong>Sites and Bindings:</strong> Host headers, port, SSL certificate. <strong>Management:</strong> IIS Manager GUI or appcmd.exe. Used for intranet and legacy Windows-hosted apps.</p></div>
+
+  <div class="qa"><q>What is classic ASP?</q>
+  <p><strong>Classic ASP:</strong> Server-side scripting (late 1990s). .asp files, VBScript/JScript, runs on IIS. Mixes HTML and <code>&lt;% ... %&gt;</code>. Objects: Request, Response, Server, Session, Application. Interpreted per request. Predecessor to ASP.NET. Relevant for legacy maintenance.</p></div>
+  <div class="qa"><q>Responsive design with Bootstrap?</q>
+  <p>12-column grid. <strong>Breakpoints:</strong> xs, sm (576px), md (768px), lg (992px), xl (1200px). <strong>Classes:</strong> <code>container</code>, <code>row</code>, <code>col-6</code>, <code>col-md-4</code>, <code>col-12 col-md-6</code>. Utilities: d-none, d-flex, spacing. <code>img-fluid</code> for images. Use viewport meta; test on devices.</p></div>
+
+  <h2>9. Quick Reference</h2>
+  <table>
+    <tr><th>Topic</th><th>Key Points</th></tr>
+    <tr><td>Closure</td><td>Inner function keeps outer scope variables</td></tr>
+    <tr><td>Promise</td><td>pending → fulfilled/rejected; .then(), .catch()</td></tr>
+    <tr><td>async/await</td><td>Clean async; use try/catch for errors</td></tr>
+    <tr><td>INNER JOIN</td><td>Only matches; LEFT JOIN keeps all left rows</td></tr>
+    <tr><td>Index</td><td>Faster reads; use on FK and filtered columns</td></tr>
+    <tr><td>Transaction</td><td>BEGIN TRAN; TRY/CATCH; COMMIT or ROLLBACK</td></tr>
+    <tr><td>PCI/PA-DSS</td><td>Card data security; encrypt, restrict access</td></tr>
+    <tr><td>OOP pillars</td><td>Encapsulation, Inheritance, Polymorphism, Abstraction</td></tr>
+    <tr><td>SQL injection</td><td>Use parameterized queries; never concatenate user input</td></tr>
+    <tr><td>Event delegation</td><td>Single listener on parent; check event.target</td></tr>
+    <tr><td>CTE</td><td>WITH cte AS (...) – named temp result set for readability/recursion</td></tr>
+    <tr><td>Connection pooling</td><td>Reuse DB connections; reduces overhead; configure min/max</td></tr>
+  </table>
+
+  <p class="tip"><strong>Tip:</strong> Use examples from your Ticketing project (events, venues, tickets, ETL endpoint) when answering. It shows practical experience.</p>
+
+  <p style="margin-top: 32px; font-size: 0.9rem; color: #64748b;">Good luck with your second round interview! 🎯</p>
+</body>
+</html>

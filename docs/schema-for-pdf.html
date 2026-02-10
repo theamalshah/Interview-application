@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ticketing Platform – T-SQL Schema (Save as PDF)</title>
+  <style>
+    @media print {
+      body { font-size: 11pt; }
+      .no-print { display: none !important; }
+      .page-break { page-break-before: always; }
+      pre, .code-block { page-break-inside: avoid; }
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+      line-height: 1.5;
+      color: #1a1a1a;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 24px;
+      background: #fff;
+    }
+    .no-print {
+      background: #e6f3ff;
+      border: 1px solid #2b6cb0;
+      padding: 12px 16px;
+      margin-bottom: 24px;
+      border-radius: 6px;
+      font-family: system-ui, sans-serif;
+      font-size: 14px;
+    }
+    .no-print strong { color: #1a365d; }
+    h1 {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      color: #1a365d;
+      border-bottom: 2px solid #2b6cb0;
+      padding-bottom: 8px;
+      font-size: 1.6em;
+      margin-top: 0;
+    }
+    h2 {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      color: #2d3748;
+      font-size: 1.2em;
+      margin-top: 28px;
+      margin-bottom: 12px;
+    }
+    .code-block {
+      background: #f7fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 16px;
+      overflow-x: auto;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+    .code-block pre { margin: 0; white-space: pre; }
+    .c { color: #6b7280; }   /* comment */
+    .k { color: #059669; font-weight: 600; }  /* keyword */
+    .s { color: #b45309; }   /* string */
+    .n { color: #2563eb; }   /* number */
+    .code-block .c { font-style: italic; }
+    .schema-note {
+      font-family: system-ui, sans-serif;
+      font-size: 13px;
+      color: #4a5568;
+      margin-top: 8px;
+    }
+    .cover-title {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      text-align: center;
+      padding: 80px 20px;
+    }
+    .cover-title h1 { border: none; font-size: 1.8em; }
+    .cover-title p { color: #718096; margin-top: 12px; }
+  </style>
+</head>
+<body>
+
+  <p class="no-print"><strong>To save as PDF:</strong> Press <kbd>Ctrl+P</kbd> (or Cmd+P on Mac) → choose <strong>Save as PDF</strong> or <strong>Microsoft Print to PDF</strong> → Save.</p>
+
+  <div class="cover-title">
+    <h1>Ticketing Platform – T-SQL Schema</h1>
+    <p>Interview Application · SQL Server · Venues, Events, Tickets</p>
+    <p style="font-size: 0.95em;">Technical Solutions Expert – AudienceView</p>
+  </div>
+
+  <div class="page-break"></div>
+
+  <h1>1. Database schema</h1>
+  <p class="schema-note">Database: <strong>TicketingDemo</strong>. Tables: Venues → Events → Tickets (foreign keys). Events take place at venues; tickets are sales for an event. The API also exposes <code>GET /api/events/ticket-summary</code>, which aggregates Tickets per Event (COUNT, SUM) via JOIN and GROUP BY.</p>
+
+  <h2>schema.sql</h2>
+  <div class="code-block">
+<pre><span class="c">-- Ticketing platform: Venues, Events, Tickets</span>
+<span class="k">USE</span> TicketingDemo;
+<span class="k">GO</span>
+
+<span class="c">-- Venues (where events happen)</span>
+<span class="k">IF</span> OBJECT_ID(<span class="s">'dbo.Venues'</span>, <span class="s">'U'</span>) <span class="k">IS NULL</span>
+<span class="k">BEGIN</span>
+  <span class="k">CREATE TABLE</span> dbo.Venues (
+    Id       <span class="k">INT IDENTITY</span>(1,1) <span class="k">PRIMARY KEY</span>,
+    Name     NVARCHAR(200) <span class="k">NOT NULL</span>,
+    City     NVARCHAR(100),
+    Capacity <span class="k">INT</span>
+  );
+<span class="k">END</span>
+<span class="k">GO</span>
+
+<span class="c">-- Events (concerts, games, shows)</span>
+<span class="k">IF</span> OBJECT_ID(<span class="s">'dbo.Events'</span>, <span class="s">'U'</span>) <span class="k">IS NULL</span>
+<span class="k">BEGIN</span>
+  <span class="k">CREATE TABLE</span> dbo.Events (
+    Id        <span class="k">INT IDENTITY</span>(1,1) <span class="k">PRIMARY KEY</span>,
+    VenueId   <span class="k">INT NOT NULL</span>,
+    Title     NVARCHAR(300) <span class="k">NOT NULL</span>,
+    EventDate DATETIME2 <span class="k">NOT NULL</span>,
+    Status    NVARCHAR(20) <span class="k">DEFAULT</span> <span class="s">'OnSale'</span>,
+    <span class="k">CONSTRAINT</span> FK_Events_Venue <span class="k">FOREIGN KEY</span> (VenueId) <span class="k">REFERENCES</span> dbo.Venues(Id)
+  );
+  <span class="k">CREATE INDEX</span> IX_Events_VenueId <span class="k">ON</span> dbo.Events(VenueId);
+  <span class="k">CREATE INDEX</span> IX_Events_EventDate <span class="k">ON</span> dbo.Events(EventDate);
+<span class="k">END</span>
+<span class="k">GO</span>
+
+<span class="c">-- Tickets (bookings for an event)</span>
+<span class="k">IF</span> OBJECT_ID(<span class="s">'dbo.Tickets'</span>, <span class="s">'U'</span>) <span class="k">IS NULL</span>
+<span class="k">BEGIN</span>
+  <span class="k">CREATE TABLE</span> dbo.Tickets (
+    Id           <span class="k">INT IDENTITY</span>(1,1) <span class="k">PRIMARY KEY</span>,
+    EventId      <span class="k">INT NOT NULL</span>,
+    CustomerName NVARCHAR(200),
+    Quantity     <span class="k">INT NOT NULL DEFAULT</span> 1,
+    Total        DECIMAL(10,2) <span class="k">NOT NULL</span>,
+    <span class="k">CONSTRAINT</span> FK_Tickets_Event <span class="k">FOREIGN KEY</span> (EventId) <span class="k">REFERENCES</span> dbo.Events(Id)
+  );
+  <span class="k">CREATE INDEX</span> IX_Tickets_EventId <span class="k">ON</span> dbo.Tickets(EventId);
+<span class="k">END</span>
+<span class="k">GO</span></pre>
+  </div>
+
+  <div class="page-break"></div>
+
+  <h1>2. Seed data</h1>
+  <p class="schema-note">Sample venues, events (dates after Feb 2026), and tickets for the demo.</p>
+
+  <h2>seed.sql</h2>
+  <div class="code-block">
+<pre><span class="c">-- Seed data (run after schema)</span>
+<span class="k">USE</span> TicketingDemo;
+<span class="k">GO</span>
+
+<span class="k">IF NOT EXISTS</span> (<span class="k">SELECT</span> 1 <span class="k">FROM</span> dbo.Venues)
+<span class="k">BEGIN</span>
+  <span class="k">SET</span> IDENTITY_INSERT dbo.Venues <span class="k">ON</span>;
+  <span class="k">INSERT INTO</span> dbo.Venues (Id, Name, City, Capacity) <span class="k">VALUES</span>
+    (1, <span class="s">'Grand Arena'</span>, <span class="s">'London'</span>, 20000),
+    (2, <span class="s">'Riverside Theatre'</span>, <span class="s">'Manchester'</span>, 1200),
+    (3, <span class="s">'Stadium North'</span>, <span class="s">'Glasgow'</span>, 52000);
+  <span class="k">SET</span> IDENTITY_INSERT dbo.Venues <span class="k">OFF</span>;
+<span class="k">END</span>
+<span class="k">GO</span>
+
+<span class="k">IF NOT EXISTS</span> (<span class="k">SELECT</span> 1 <span class="k">FROM</span> dbo.Events)
+<span class="k">BEGIN</span>
+  <span class="k">SET</span> IDENTITY_INSERT dbo.Events <span class="k">ON</span>;
+  <span class="k">INSERT INTO</span> dbo.Events (Id, VenueId, Title, EventDate, Status) <span class="k">VALUES</span>
+    (1, 1, <span class="s">'Summer Music Festival 2026'</span>, <span class="s">'2026-07-15 19:00:00'</span>, <span class="s">'OnSale'</span>),
+    (2, 2, <span class="s">'Comedy Night Live'</span>, <span class="s">'2026-03-01 20:00:00'</span>, <span class="s">'OnSale'</span>),
+    (3, 1, <span class="s">'Championship Final'</span>, <span class="s">'2026-08-20 15:00:00'</span>, <span class="s">'OnSale'</span>),
+    (4, 3, <span class="s">'Rock Concert Series'</span>, <span class="s">'2026-09-10 18:00:00'</span>, <span class="s">'OnSale'</span>);
+  <span class="k">SET</span> IDENTITY_INSERT dbo.Events <span class="k">OFF</span>;
+<span class="k">END</span>
+<span class="k">GO</span>
+
+<span class="k">IF NOT EXISTS</span> (<span class="k">SELECT</span> 1 <span class="k">FROM</span> dbo.Tickets)
+<span class="k">BEGIN</span>
+  <span class="k">INSERT INTO</span> dbo.Tickets (EventId, CustomerName, Quantity, Total) <span class="k">VALUES</span>
+    (1, <span class="s">'Alex Smith'</span>, 2, 149.98),
+    (1, <span class="s">'Jordan Lee'</span>, 1, 74.99),
+    (2, <span class="s">'Sam Taylor'</span>, 4, 180.00);
+<span class="k">END</span>
+<span class="k">GO</span></pre>
+  </div>
+
+  <div class="page-break"></div>
+
+  <h1>3. Table relationships</h1>
+  <p class="schema-note">Simple reference for the interview.</p>
+  <table style="width:100%; border-collapse: collapse; font-family: system-ui, sans-serif; font-size: 13px;">
+    <thead>
+      <tr style="background: #edf2f7;">
+        <th style="border: 1px solid #cbd5e0; padding: 8px 12px; text-align: left;">Table</th>
+        <th style="border: 1px solid #cbd5e0; padding: 8px 12px; text-align: left;">Key columns</th>
+        <th style="border: 1px solid #cbd5e0; padding: 8px 12px; text-align: left;">Relationship</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td style="border: 1px solid #cbd5e0; padding: 8px 12px;"><strong>Venues</strong></td>
+        <td style="border: 1px solid #cbd5e0; padding: 8px 12px;">Id (PK), Name, City, Capacity</td>
+        <td style="border: 1px solid #cbd5e0; padding: 8px 12px;">—</td>
+      </tr>
+      <tr>
+        <td style="border: 1px solid #cbd5e0; padding: 8px 12px;"><strong>Events</strong></td>
+        <td style="border: 1px solid #cbd5e0; padding: 8px 12px;">Id (PK), VenueId (FK), Title, EventDate, Status</td>
+        <td style="border: 1px solid #cbd5e0; padding: 8px 12px;">VenueId → Venues.Id</td>
+      </tr>
+      <tr>
+        <td style="border: 1px solid #cbd5e0; padding: 8px 12px;"><strong>Tickets</strong></td>
+        <td style="border: 1px solid #cbd5e0; padding: 8px 12px;">Id (PK), EventId (FK), CustomerName, Quantity, Total</td>
+        <td style="border: 1px solid #cbd5e0; padding: 8px 12px;">EventId → Events.Id</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="page-break"></div>
+
+  <h1>4. Ticket-summary query (GROUP BY)</h1>
+  <p class="schema-note">Used by <code>GET /api/events/ticket-summary</code>. JOINs Events, Venues, and Tickets; <strong>GROUP BY</strong> event so each row has <strong>TicketCount</strong> (COUNT(t.Id)) and <strong>TotalRevenue</strong> (ISNULL(SUM(t.Total), 0)). LEFT JOIN on Tickets so events with no sales still appear with 0 count and 0 revenue.</p>
+  <div class="code-block">
+<pre><span class="c">-- Per-event ticket count and revenue (no extra table; query only)</span>
+<span class="k">SELECT</span> e.Id, e.Title, e.EventDate, e.Status,
+       v.Name <span class="k">AS</span> VenueName, v.City,
+       COUNT(t.Id) <span class="k">AS</span> TicketCount,
+       ISNULL(SUM(t.Total), <span class="n">0</span>) <span class="k">AS</span> TotalRevenue
+<span class="k">FROM</span> dbo.Events e
+<span class="k">INNER JOIN</span> dbo.Venues v <span class="k">ON</span> e.VenueId = v.Id
+<span class="k">LEFT JOIN</span> dbo.Tickets t <span class="k">ON</span> t.EventId = e.Id
+<span class="k">GROUP BY</span> e.Id, e.Title, e.EventDate, e.Status, v.Name, v.City
+<span class="k">ORDER BY</span> e.EventDate</pre>
+  </div>
+
+</body>
+</html>

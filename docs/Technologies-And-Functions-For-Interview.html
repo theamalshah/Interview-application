@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ticketing Demo – Technologies &amp; Functions (Interview)</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 24px;
+      background: #fff;
+      color: #1a1a1a;
+      line-height: 1.5;
+      font-size: 14px;
+    }
+    h1 {
+      color: #1a365d;
+      border-bottom: 2px solid #2b6cb0;
+      padding-bottom: 8px;
+      font-size: 1.5rem;
+    }
+    h2 {
+      color: #2d3748;
+      font-size: 1.15rem;
+      margin-top: 28px;
+      margin-bottom: 10px;
+    }
+    h3 {
+      color: #4a5568;
+      font-size: 1rem;
+      margin-top: 16px;
+      margin-bottom: 6px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 8px 0 16px;
+      font-size: 13px;
+    }
+    th, td {
+      border: 1px solid #e2e8f0;
+      padding: 8px 10px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th { background: #f7fafc; font-weight: 600; }
+    code {
+      background: #edf2f7;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+    .note {
+      background: #ebf8ff;
+      border-left: 4px solid #2b6cb0;
+      padding: 10px 14px;
+      margin: 12px 0;
+      font-size: 13px;
+    }
+    ul { margin: 6px 0; padding-left: 20px; }
+    li { margin: 4px 0; }
+    .section-id { color: #718096; font-size: 12px; }
+    @media print {
+      body { padding: 16px; }
+      h2 { break-after: avoid; page-break-after: avoid; }
+      table { break-inside: avoid; page-break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Ticketing Platform Demo – Technologies &amp; Functions</h1>
+  <p><strong>Purpose:</strong> Use this document in the interview to explain which technologies power each part of the app and which HTML, CSS, and JavaScript functions implement the behaviour. You can print or save as PDF (Ctrl+P → Save as PDF).</p>
+  <p><strong>Definitions:</strong> For each technology (HTML, CSS, JavaScript, SQL/T-SQL) the document gives a <strong>purpose/definition</strong> of that technology and its role in the project. Each concept table includes a <strong>Definition</strong> column: a short description of what that concept is, plus where it’s used and what it shows in this app.</p>
+
+  <!-- ========== FOLDER STRUCTURE ========== -->
+  <h2>1. Folder structure</h2>
+  <p class="note">Project layout. All PDF-ready docs (this file, flow diagram, schema, etc.) are in <code>docs/</code>.</p>
+  <pre style="background:#f7fafc; border:1px solid #e2e8f0; border-radius:6px; padding:14px; font-size:12px; overflow-x:auto;">Interview application/
+├── backend/
+│   ├── scripts/
+│   │   └── init-db.js      # DB schema + seed on first run
+│   ├── sql/
+│   │   ├── schema.sql      # Venues, Events, Tickets
+│   │   └── seed.sql        # Sample data
+│   ├── db.js               # SQL Server connection pool
+│   ├── server.js           # Express API + static frontend
+│   ├── package.json
+│   └── Dockerfile          # (optional; app runs via volume mount)
+├── frontend/
+│   ├── index.html          # Single page UI
+│   ├── styles.css          # Custom styles (stats strip, refresh buttons, cards, toasts, ticket-event module)
+│   └── app.js              # Fetch, DOM, events, ETL, toasts, ticket-event summary
+├── docs/                   # PDF-ready interview docs
+│   ├── Technologies-And-Functions-For-Interview.html  # this file
+│   ├── system-flow-diagram.html
+│   ├── schema-for-pdf.html
+│   ├── db-tables-reference.html
+│   └── App-Explanation-For-PDF.html
+├── data/
+│   └── README.md           # Data volume info
+├── nginx/
+│   └── nginx.conf          # For production deploy
+├── docker-compose.yml      # Local: SQL Server + API
+├── docker-compose.prod.yml # EC2: nginx:80 → api, sqlserver internal
+├── .env.example            # Copy to .env on server; set passwords
+├── .dockerignore           # Keeps EC2 build context small
+├── README.md
+├── DEPLOY-EC2.md           # Step-by-step EC2 deploy
+└── RUN.md</pre>
+
+  <!-- ========== TECHNOLOGIES BY SECTION ========== -->
+  <h2>2. Technologies used by section</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Section / Layer</th>
+        <th>Technologies</th>
+        <th>What they do here</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Frontend – structure</strong></td>
+        <td>HTML5</td>
+        <td>Semantic structure: nav, container, cards, tables, forms (select, input, textarea, buttons). Single-page layout with clear sections.</td>
+      </tr>
+      <tr>
+        <td><strong>Frontend – styling</strong></td>
+        <td>CSS3, Bootstrap 5.3</td>
+        <td>Bootstrap for layout (grid, cards, navbar, forms, tables, utilities). <code>styles.css</code>: hero, cards, scrollable tables (sticky headers), import panel, success toasts, Ticket–Event module, <strong>responsive</strong> (tablet/mobile/small mobile; toasts full-width on small screens; 44px tap targets).</td>
+      </tr>
+      <tr>
+        <td><strong>Frontend – icons</strong></td>
+        <td>Bootstrap Icons 1.11</td>
+        <td>Icons in nav and section headers (ticket, calendar, building, upload).</td>
+      </tr>
+      <tr>
+        <td><strong>Frontend – behaviour</strong></td>
+        <td>Vanilla JavaScript (ES6+)</td>
+        <td>Fetch API to call the backend, DOM updates (tables, messages, dropdowns), event listeners for Add event, Sell ticket, Import ETL; success toasts for Add event and Sell ticket; Ticket–Event module (events with ticket summary, View tickets, close button + <strong>Esc</strong> to close); <strong>stats strip</strong> (events/venues/tickets counts); <strong>per-section refresh</strong> buttons. No framework.</td>
+      </tr>
+      <tr>
+        <td><strong>Backend – API</strong></td>
+        <td>Node.js, Express</td>
+        <td>REST API: GET/POST for events, venues, tickets; GET <code>/api/events/ticket-summary</code> (JOIN + GROUP BY for per-event ticket count/revenue); POST for ETL. Serves static frontend. JSON body parsing.</td>
+      </tr>
+      <tr>
+        <td><strong>Backend – database access</strong></td>
+        <td>mssql (node package)</td>
+        <td>Connection pool to SQL Server; parameterised T-SQL queries; creates database if missing; retries on startup.</td>
+      </tr>
+      <tr>
+        <td><strong>Database</strong></td>
+        <td>SQL Server 2022</td>
+        <td>Database <code>TicketingDemo</code>; tables Venues, Events, Tickets; T-SQL (SELECT, INSERT, JOINs, OUTPUT).</td>
+      </tr>
+      <tr>
+        <td><strong>DevOps / run</strong></td>
+        <td>Docker, Docker Compose</td>
+        <td>SQL Server and Node API in containers; frontend served by API; data in Docker volumes.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ========== HTML SECTIONS ========== -->
+  <h2>3. HTML sections and elements (what each part is for)</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Section / ID or class</th>
+        <th>Purpose</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>&lt;nav class="navbar"&gt;</code></td>
+        <td>Top bar with app title and ticket icon. Bootstrap navbar; dark theme.</td>
+      </tr>
+      <tr>
+        <td><code>.hero</code> (“What is this?”)</td>
+        <td>Short intro: ticketing demo, events at venues, tickets in SQL Server. Sets context for the interviewer.</td>
+      </tr>
+      <tr>
+        <td><strong>Stats strip</strong><br><code>#stats-strip</code>, <code>#stats-events</code>, <code>#stats-venues</code>, <code>#stats-tickets</code></td>
+        <td>Shows “X events · Y venues · Z tickets” below the hero; counts update when each section loads. Hidden until first data load.</td>
+      </tr>
+      <tr>
+        <td><strong>Events card</strong><br><code>#events-loading</code>, <code>#events-error</code>, <code>#events-table</code>, <code>#refresh-events</code></td>
+        <td>Shows “Loading…” until data arrives; error message if fetch fails; table of Event, Venue, Date, Status. Scrollable area.</td>
+      </tr>
+      <tr>
+        <td><strong>Events &amp; ticket sales (Ticket–Event module)</strong><br><code>#ticket-event-loading</code>, <code>#ticket-event-error</code>, <code>#ticket-event-table</code>, <code>#ticket-event-detail</code>, <code>.btn-view-tickets</code>, <code>#ticket-event-detail-close</code>, <code>#refresh-ticket-event</code></td>
+        <td>Table of each event with Venue, Date, Tickets sold, Revenue (from <code>/api/events/ticket-summary</code>). “View tickets” opens a detail block (Customer, Qty, Total); close via <code>#ticket-event-detail-close</code> or <strong>Esc</strong>. Refresh button reloads summary.</td>
+      </tr>
+      <tr>
+        <td><strong>Venues card</strong><br><code>#venues-loading</code>, <code>#venues-error</code>, <code>#venues-table</code>, <code>#refresh-venues</code></td>
+        <td>Same pattern: loading state, error, table (Name, City, Capacity). Refresh button reloads venues.</td>
+      </tr>
+      <tr>
+        <td><strong>Tickets card</strong><br><code>#tickets-loading</code>, <code>#tickets-error</code>, <code>#tickets-table</code>, <code>#refresh-tickets</code></td>
+        <td>Loading, error, table (Event, Customer, Qty, Total). Refresh button reloads tickets.</td>
+      </tr>
+      <tr>
+        <td><strong>Add event form</strong><br><code>#event-venue</code>, <code>#event-title</code>, <code>#event-date</code>, <code>#event-add</code>, <code>#event-message</code></td>
+        <td>Dropdown (venue), text (title), datetime-local (date), button to submit. Message shows success or validation error.</td>
+      </tr>
+      <tr>
+        <td><strong>Sell ticket form</strong><br><code>#ticket-event</code>, <code>#ticket-customer</code>, <code>#ticket-qty</code>, <code>#ticket-total</code>, <code>#ticket-add</code>, <code>#ticket-message</code></td>
+        <td>Event dropdown (filled by JS from events), customer name, quantity, total, button, message.</td>
+      </tr>
+      <tr>
+        <td><strong>Import events (ETL)</strong><br><code>#import-input</code>, <code>#import-btn</code>, <code>#import-result</code>, <code>#import-response</code></td>
+        <td>Textarea for JSON array of events; button to POST; span for “Imported N events”; pre for raw API response.</td>
+      </tr>
+      <tr>
+        <td><strong>Success toasts</strong><br><code>#toast-container</code></td>
+        <td>Fixed top-right container; success popups (title + message) appear after Add event and Sell ticket, auto-dismiss after 4 seconds.</td>
+      </tr>
+      <tr>
+        <td>Footer line (Data: SQL Server…)</td>
+        <td>Reminder that data lives in SQL Server and Node/Docker run the stack.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>3.1 HTML concepts used (interview talking points)</h3>
+  <p><strong>Purpose / definition of HTML:</strong> HTML (HyperText Markup Language) is the standard markup for web pages. It defines the <em>structure and content</em> of the page: headings, sections, forms, tables, and links. In this app, HTML provides the skeleton (nav, hero, cards, tables, forms) that CSS styles and JavaScript brings to life.</p>
+  <p class="note">Use this table to say which HTML concepts you used and where. Every concept in the “Concept” column appears in <code>index.html</code>.</p>
+  <table>
+    <thead>
+      <tr>
+        <th>Concept</th>
+        <th>Definition</th>
+        <th>Where it’s used</th>
+        <th>What it shows</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Document structure</strong></td>
+        <td>Declarations and root elements that define a valid HTML document.</td>
+        <td><code>&lt;!DOCTYPE html&gt;</code>, <code>&lt;html lang="en"&gt;</code>, <code>&lt;head&gt;</code>, <code>&lt;body&gt;</code></td>
+        <td>Valid HTML5 document; language attribute for accessibility.</td>
+      </tr>
+      <tr>
+        <td><strong>Meta &amp; viewport</strong></td>
+        <td>Metadata and viewport settings that affect encoding and mobile layout.</td>
+        <td><code>&lt;meta charset="UTF-8"&gt;</code>, <code>&lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;</code></td>
+        <td>Character encoding and responsive viewport for mobile.</td>
+      </tr>
+      <tr>
+        <td><strong>Semantic elements</strong></td>
+        <td>Elements that convey meaning (e.g. navigation, main content) for structure and accessibility.</td>
+        <td><code>&lt;nav&gt;</code> (navbar), <code>&lt;main&gt;</code> (optional), section-like <code>&lt;div&gt;</code> with classes (hero, cards)</td>
+        <td>Structure and meaning; nav for navigation, containers for layout.</td>
+      </tr>
+      <tr>
+        <td><strong>Headings</strong></td>
+        <td>Hierarchical headings (h1–h6) that define document outline.</td>
+        <td><code>&lt;h1&gt;</code>, <code>&lt;h2&gt;</code> in hero and card headers</td>
+        <td>Document outline and hierarchy; one h1 per page.</td>
+      </tr>
+      <tr>
+        <td><strong>IDs and classes</strong></td>
+        <td>Attributes that identify elements (id: unique; class: reusable) for styling and scripting.</td>
+        <td><code>id="events-table"</code>, <code>class="card"</code>, <code>class="btn btn-primary"</code></td>
+        <td>IDs for JS hooks and unique elements; classes for styling and Bootstrap.</td>
+      </tr>
+      <tr>
+        <td><strong>Tables</strong></td>
+        <td>Elements for tabular data: table, thead, tbody, tr, th, td.</td>
+        <td><code>&lt;table&gt;</code>, <code>&lt;thead&gt;</code>, <code>&lt;tbody&gt;</code>, <code>&lt;tr&gt;</code>, <code>&lt;th&gt;</code>, <code>&lt;td&gt;</code></td>
+        <td>Tabular data (events, venues, tickets); thead/tbody for structure and sticky headers.</td>
+      </tr>
+      <tr>
+        <td><strong>Forms</strong></td>
+        <td>Controls for user input: select, input, button, textarea, label; can enforce required fields.</td>
+        <td><code>&lt;select&gt;</code>, <code>&lt;input type="text"&gt;</code>, <code>type="number"</code>, <code>type="datetime-local"</code>, <code>&lt;button type="button"&gt;</code>, <code>&lt;textarea&gt;</code>, <code>&lt;label&gt;</code></td>
+        <td>Form controls for Add event, Sell ticket, Import ETL; labels with <code>for</code> and <code>required</code> for validation.</td>
+      </tr>
+      <tr>
+        <td><strong>Links and resources</strong></td>
+        <td>Ways to load external stylesheets and scripts (link, script).</td>
+        <td><code>&lt;link rel="stylesheet"&gt;</code> (Bootstrap, Bootstrap Icons, styles.css), <code>&lt;script src="app.js"&gt;</code></td>
+        <td>External CSS and JS; separation of structure, style, and behaviour.</td>
+      </tr>
+      <tr>
+        <td><strong>Utility classes (Bootstrap)</strong></td>
+        <td>Pre-defined class names that apply layout, spacing, or visibility without writing custom CSS.</td>
+        <td><code>container</code>, <code>row</code>, <code>col-lg-6</code>, <code>card</code>, <code>d-none</code>, <code>d-flex</code>, <code>mb-4</code></td>
+        <td>Layout grid, cards, visibility toggles, spacing without custom CSS.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ========== CSS ========== -->
+  <h2>4. CSS – custom styles and what they do</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Selector / class</th>
+        <th>Purpose</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>body</code></td>
+        <td>Font and light background (<code>#f0f4f8</code>) for the page.</td>
+      </tr>
+      <tr>
+        <td><code>.navbar</code></td>
+        <td>Dark blue nav (<code>#1a365d</code>) overridden so it’s clearly visible.</td>
+      </tr>
+      <tr>
+        <td><code>.hero</code></td>
+        <td>Intro block: gradient background, rounded corners, padding, border. Visually separates “What is this?” from data.</td>
+      </tr>
+      <tr>
+        <td><code>.stats-strip</code>, <code>.stats-item</code>, <code>.stats-divider</code></td>
+        <td>Strip below hero: flex layout, counts (events, venues, tickets); accent colour for numbers.</td>
+      </tr>
+      <tr>
+        <td><code>.btn-refresh</code></td>
+        <td>Refresh icon button in card headers; hover rotates icon and uses accent colour.</td>
+      </tr>
+      <tr>
+        <td><code>.card</code></td>
+        <td>No border, light shadow so cards look clean.</td>
+      </tr>
+      <tr>
+        <td><code>.section-desc</code></td>
+        <td>Small grey text under each section title (e.g. “Where events take place”).</td>
+      </tr>
+      <tr>
+        <td><code>.import-panel</code></td>
+        <td>ETL area: grey background, rounded, padding so it’s clearly a distinct action.</td>
+      </tr>
+      <tr>
+        <td><code>.table-scroll</code></td>
+        <td>Max height 280px, vertical and horizontal scroll so long lists don’t stretch the page.</td>
+      </tr>
+      <tr>
+        <td><code>.table-scroll thead th</code></td>
+        <td>Sticky header: column titles stay visible while scrolling table body.</td>
+      </tr>
+      <tr>
+        <td><code>.toast-container</code>, <code>.toast-success</code></td>
+        <td>Fixed top-right container for success popups; toast has icon, title, message; slide-in animation; auto-dismiss.</td>
+      </tr>
+      <tr>
+        <td><code>.ticket-event-detail</code></td>
+        <td>Expandable block “Tickets for &lt;event&gt;” (Customer, Qty, Total); close via <code>#ticket-event-detail-close</code> or <strong>Esc</strong> key.</td>
+      </tr>
+      <tr>
+        <td><strong>Responsive</strong></td>
+        <td>Breakpoints: ≤992px (tablet), ≤768px (mobile), ≤576px (small mobile). Smaller padding/fonts; toasts full-width on small screens; buttons/inputs min 44px height for touch.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p class="note">Styles live in <code>frontend/styles.css</code>. Everything else (grid, form controls, buttons, tables, badges, spacing) comes from <strong>Bootstrap 5</strong> (e.g. <code>container</code>, <code>row</code>, <code>col-lg-6</code>, <code>form-control</code>, <code>btn btn-primary</code>, <code>d-none</code>).</p>
+
+  <h3>4.1 CSS concepts used (interview talking points)</h3>
+  <p><strong>Purpose / definition of CSS:</strong> CSS (Cascading Style Sheets) controls the <em>presentation</em> of the page: layout, colours, typography, spacing, and responsiveness. In this app, CSS (in <code>styles.css</code> and Bootstrap) defines the look of the navbar, hero, cards, stats strip, tables, toasts, and ticket-detail panel, plus breakpoints for tablet and mobile.</p>
+  <p class="note">Use this table to say which CSS concepts you used and where. Custom styles are in <code>styles.css</code>; layout and utilities also use Bootstrap.</p>
+  <table>
+    <thead>
+      <tr>
+        <th>Concept</th>
+        <th>Definition</th>
+        <th>Where it’s used</th>
+        <th>What it shows</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Selectors</strong></td>
+        <td>Patterns that select which elements a rule applies to (type, class, id, descendant).</td>
+        <td>Type (<code>body</code>, <code>table</code>), class (<code>.hero</code>, <code>.card</code>), id (in Bootstrap), descendant (<code>.table-scroll thead th</code>)</td>
+        <td>Targeting elements; descendant selectors for sticky header inside scroll container.</td>
+      </tr>
+      <tr>
+        <td><strong>CSS custom properties (variables)</strong></td>
+        <td>Named values (e.g. <code>--accent</code>) defined in <code>:root</code> and used with <code>var()</code>.</td>
+        <td><code>:root { --accent: #0284c7; --nav-bg: ...; --card-shadow: ... }</code></td>
+        <td>Single place for colours and shadows; easy theme changes; used via <code>var(--accent)</code>.</td>
+      </tr>
+      <tr>
+        <td><strong>Box model</strong></td>
+        <td>Content plus padding, border, and margin that define an element’s size and spacing.</td>
+        <td><code>padding</code>, <code>margin</code>, <code>border</code>, <code>border-radius</code> on cards, hero, buttons</td>
+        <td>Spacing and borders; border-radius for rounded corners.</td>
+      </tr>
+      <tr>
+        <td><strong>Flexbox</strong></td>
+        <td>Layout model (display: flex) for arranging items in a row or column with alignment and gap.</td>
+        <td><code>display: flex</code>, <code>align-items</code>, <code>justify-content</code>, <code>gap</code> on .stats-strip, card headers (with Bootstrap <code>d-flex</code>)</td>
+        <td>Horizontal layout for stats strip and header/refresh button; gap for spacing.</td>
+      </tr>
+      <tr>
+        <td><strong>Colours and gradients</strong></td>
+        <td>Solid colours (hex, rgba) and linear-gradient for backgrounds and borders.</td>
+        <td><code>background: linear-gradient(...)</code> on hero, nav, cards; <code>color</code>, <code>border-color</code></td>
+        <td>Visual hierarchy; gradients for depth; hex and rgba.</td>
+      </tr>
+      <tr>
+        <td><strong>Shadows</strong></td>
+        <td><code>box-shadow</code> adds a shadow behind an element for depth.</td>
+        <td><code>box-shadow</code> on cards, hero, toasts, navbar</td>
+        <td>Depth and separation from background.</td>
+      </tr>
+      <tr>
+        <td><strong>Transitions and transforms</strong></td>
+        <td>Transition animates property changes; transform moves or rotates elements (e.g. translateY, rotate).</td>
+        <td><code>transition</code> on cards (box-shadow, transform), <code>transform: translateY(-2px)</code> on hover, <code>transform: rotate(-90deg)</code> on .btn-refresh hover</td>
+        <td>Smooth hover feedback; lift effect on cards; refresh icon rotation.</td>
+      </tr>
+      <tr>
+        <td><strong>Positioning</strong></td>
+        <td>position: fixed (relative to viewport); relative (relative to self) for positioning context.</td>
+        <td><code>position: fixed</code> for toast container (top-right); <code>position: relative</code> on hero for pseudo-element</td>
+        <td>Toasts stay visible while scrolling; overlay effects with ::before.</td>
+      </tr>
+      <tr>
+        <td><strong>Sticky positioning</strong></td>
+        <td>position: sticky keeps an element in flow until a threshold (e.g. top: 0), then it sticks while scrolling.</td>
+        <td><code>position: sticky; top: 0</code> on <code>.table-scroll thead th</code></td>
+        <td>Table column headers stay visible when scrolling long table body.</td>
+      </tr>
+      <tr>
+        <td><strong>Media queries (responsive)</strong></td>
+        <td>@media rules that apply styles only when conditions (e.g. max-width) are met.</td>
+        <td><code>@media (max-width: 992px)</code>, <code>768px</code>, <code>576px</code> for padding, font-size, full-width toasts, min-height on touch targets</td>
+        <td>Breakpoints for tablet/mobile; touch-friendly 44px targets; toasts full-width on small screens.</td>
+      </tr>
+      <tr>
+        <td><strong>Pseudo-elements</strong></td>
+        <td>::before and ::after create virtual elements that can be styled (e.g. overlays) without extra HTML.</td>
+        <td><code>.hero::before</code> for radial gradient overlay</td>
+        <td>Decorative overlay without extra HTML.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ========== JAVASCRIPT FUNCTIONS ========== -->
+  <h2>5. JavaScript – functions and their role</h2>
+
+  <h3>5.1 Helpers (used across the app)</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Function</th>
+        <th>What it does</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>$(id)</code></td>
+        <td>Shortcut for <code>document.getElementById(id)</code>. Used everywhere to get form fields and message elements.</td>
+      </tr>
+      <tr>
+        <td><code>escapeHtml(s)</code></td>
+        <td>Safe output: puts <code>s</code> in a temporary div’s <code>textContent</code> then returns <code>innerHTML</code> so user data doesn’t inject HTML. Returns “—” if null.</td>
+      </tr>
+      <tr>
+        <td><code>formatDate(s)</code></td>
+        <td>Parses date string, returns <code>toLocaleString()</code> for display, or “—” if invalid. Used for event and ticket dates.</td>
+      </tr>
+      <tr>
+        <td><code>showSuccessToast(title, message)</code></td>
+        <td>Creates a success toast in <code>#toast-container</code> with check icon, title, message; removes it after 4 seconds. Used after Add event and Sell ticket.</td>
+      </tr>
+      <tr>
+        <td><code>fetchWithTimeout(url, opts)</code></td>
+        <td>Wrapper around <code>fetch</code> with <code>AbortController</code>; aborts after 10s. Used for GETs (events, venues, tickets, ticket-summary).</td>
+      </tr>
+      <tr>
+        <td><code>statsCounts</code>, <code>updateStatsStrip()</code></td>
+        <td>Object holds events/venues/tickets counts; <code>updateStatsStrip()</code> shows <code>#stats-strip</code> and updates <code>#stats-events</code>, <code>#stats-venues</code>, <code>#stats-tickets</code>. Called after each load.</td>
+      </tr>
+      <tr>
+        <td><code>closeTicketEventDetail()</code></td>
+        <td>Hides <code>#ticket-event-detail</code>. Used by close button and by <strong>Esc</strong> key listener (only when detail is visible).</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>5.2 Loading data (fetch + DOM)</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Function</th>
+        <th>What it does</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>loadEvents()</code></td>
+        <td>Shows “Loading…”, hides error. <code>fetch('/api/events')</code> → on success fills <code>#events-table</code> tbody, sets <code>statsCounts.events</code>, <code>updateStatsStrip()</code>, shows table, calls <code>fillEventDropdowns</code>. On failure shows error message.</td>
+      </tr>
+      <tr>
+        <td><code>fillEventDropdowns(events)</code></td>
+        <td>Fills <code>#ticket-event</code> with options from events array (value=Id, label=Title). Keeps previous selection if still present.</td>
+      </tr>
+      <tr>
+        <td><code>loadVenues()</code></td>
+        <td>Same pattern: fetch <code>/api/venues</code>, fill <code>#venues-table</code>, set <code>statsCounts.venues</code>, <code>updateStatsStrip()</code>, show table or error.</td>
+      </tr>
+      <tr>
+        <td><code>loadTickets()</code></td>
+        <td>Fetch <code>/api/tickets</code>, fill <code>#tickets-table</code>, set <code>statsCounts.tickets</code>, <code>updateStatsStrip()</code>, show table or error.</td>
+      </tr>
+      <tr>
+        <td><code>loadTicketEventSummary()</code></td>
+        <td>Fetches <code>/api/events/ticket-summary</code> and <code>/api/tickets</code> in parallel. Fills <code>#ticket-event-table</code> with Event, Venue, Date, Tickets sold, Revenue; caches tickets for “View tickets”. Called on load and after Sell ticket.</td>
+      </tr>
+      <tr>
+        <td><code>showTicketsForEvent(eventId, eventTitle)</code></td>
+        <td>Filters cached tickets by <code>EventId</code>, shows <code>#ticket-event-detail</code> with table of Customer, Qty, Total for that event.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>5.3 User actions (event listeners)</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Where</th>
+        <th>What it does</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>#event-add</code> click</td>
+        <td>Reads venue, title, date. Validates title and date; shows “Adding…” then POST <code>/api/events</code> with JSON. On success: message “Event added”, clear title, <code>loadEvents()</code>, <code>showSuccessToast('Event added', …)</code>. On error: show API error or “Something went wrong.”</td>
+      </tr>
+      <tr>
+        <td>Default <code>#event-date</code></td>
+        <td>On load, sets default to tomorrow 19:00 so user can add an event quickly.</td>
+      </tr>
+      <tr>
+        <td><code>#ticket-add</code> click</td>
+        <td>Reads event, customer, quantity, total. Validates event and customer. POST <code>/api/tickets</code>; on success: “Ticket sold”, clear customer/total, <code>loadTickets()</code>, <code>loadTicketEventSummary()</code>, <code>showSuccessToast('Ticket sold', …)</code>. Else show error.</td>
+      </tr>
+      <tr>
+        <td><code>#import-btn</code> click</td>
+        <td>Parses textarea as JSON (array or single object). POST <code>/api/etl/events</code> with array. Shows raw response in <code>#import-response</code>; if <code>data.loaded</code> present, shows “Imported N event(s)” and calls <code>loadEvents()</code>.</td>
+      </tr>
+      <tr>
+        <td><code>#ticket-event-detail-close</code> click</td>
+        <td>Calls <code>closeTicketEventDetail()</code> to hide the ticket detail panel.</td>
+      </tr>
+      <tr>
+        <td><strong>Esc</strong> key (document)</td>
+        <td>When <code>#ticket-event-detail</code> is visible, Esc calls <code>closeTicketEventDetail()</code>.</td>
+      </tr>
+      <tr>
+        <td><code>#refresh-events</code>, <code>#refresh-venues</code>, <code>#refresh-tickets</code>, <code>#refresh-ticket-event</code></td>
+        <td>Refresh buttons in card headers; each calls the corresponding load function (loadEvents, loadVenues, loadTickets, loadTicketEventSummary).</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>5.4 On page load</h3>
+  <p>At the bottom of <code>app.js</code>: <code>loadEvents(); loadVenues(); loadTickets(); loadTicketEventSummary();</code> so all four data sections (events, venues, tickets, events &amp; ticket sales) load when the page opens.</p>
+
+  <h3>5.5 JavaScript concepts used (interview talking points)</h3>
+  <p><strong>Purpose / definition of JavaScript:</strong> JavaScript is the scripting language of the browser. It adds <em>behaviour</em>: fetching data from the API, updating the DOM, handling user events (clicks, keyboard), validation, and showing toasts. This app uses vanilla ES6+ JavaScript (no framework) to drive the UI and talk to the Node API.</p>
+  <p class="note">Use this table to say which JavaScript concepts you used and where. Example: “I used <em>async/await</em> for all API calls,” “I used <em>template literals</em> to build table rows,” “<em>escapeHtml</em> via <code>textContent</code> to prevent XSS.”</p>
+  <table>
+    <thead>
+      <tr>
+        <th>Concept</th>
+        <th>Definition</th>
+        <th>Where it’s used</th>
+        <th>What it shows</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>async/await</strong></td>
+        <td>Syntax for writing asynchronous code that looks synchronous; awaits a Promise and returns its value.</td>
+        <td><code>loadEvents()</code>, <code>loadVenues()</code>, <code>loadTickets()</code>; all three button click handlers</td>
+        <td>Async flow without callback hell; handling Promises in a readable way.</td>
+      </tr>
+      <tr>
+        <td><strong>Fetch API</strong></td>
+        <td>Browser API to make HTTP requests; returns a Promise that resolves to the Response.</td>
+        <td>GET <code>/api/events</code>, <code>/api/venues</code>, <code>/api/tickets</code>; POST with <code>method</code>, <code>headers</code>, <code>body</code></td>
+        <td>Modern HTTP client; checking <code>r.ok</code> and parsing <code>r.json()</code>.</td>
+      </tr>
+      <tr>
+        <td><strong>Template literals</strong></td>
+        <td>Strings using backticks with <code>${expression}</code> for interpolation.</td>
+        <td>Table rows: <code>data.map(e =&gt; `&lt;tr&gt;…${escapeHtml(e.Title)}…`)</code>; option strings; JSON response display</td>
+        <td>ES6 strings with interpolation; building HTML and text safely.</td>
+      </tr>
+      <tr>
+        <td><strong>Arrow functions</strong></td>
+        <td>Compact function syntax <code>() =&gt; { }</code> with lexical <code>this</code>.</td>
+        <td><code>.map(e =&gt; …)</code>, <code>addEventListener('click', async () =&gt; { … })</code></td>
+        <td>Concise callbacks and event handlers; lexical <code>this</code> when needed.</td>
+      </tr>
+      <tr>
+        <td><strong>Array methods</strong></td>
+        <td>Methods on arrays: map (transform), join (to string), filter; Array.isArray checks if value is an array.</td>
+        <td><code>.map()</code> to build rows/options; <code>.join('')</code> to make one string; <code>Array.isArray(arr)</code> in ETL</td>
+        <td>Functional-style data transformation; handling both array and single object in ETL.</td>
+      </tr>
+      <tr>
+        <td><strong>try/catch</strong></td>
+        <td>try block runs code; catch runs if an exception is thrown; used for error handling.</td>
+        <td>Every <code>async</code> load and submit; <code>JSON.parse</code> in ETL (invalid JSON → user message)</td>
+        <td>Structured error handling; showing user-friendly messages instead of crashing.</td>
+      </tr>
+      <tr>
+        <td><strong>DOM APIs</strong></td>
+        <td>Browser APIs to read/update the document: getElementById, querySelector, classList, textContent, innerHTML, createElement.</td>
+        <td><code>getElementById</code>, <code>querySelector('tbody')</code>, <code>classList.add/remove</code>, <code>textContent</code>, <code>innerHTML</code>, <code>.value</code>, <code>createElement</code> in <code>escapeHtml</code></td>
+        <td>Direct DOM manipulation; toggling loading/error states; safe HTML via <code>textContent</code> then <code>innerHTML</code>.</td>
+      </tr>
+      <tr>
+        <td><strong>Event listeners</strong></td>
+        <td>addEventListener attaches a handler to an element for events like click or keydown.</td>
+        <td><code>addEventListener('click', …)</code> on buttons (Add event, Sell ticket, Import, refresh, close); <code>addEventListener('keydown', …)</code> for <strong>Esc</strong> to close ticket detail</td>
+        <td>Decoupled UI logic; one handler per action; async handlers for network; keyboard accessibility.</td>
+      </tr>
+      <tr>
+        <td><strong>JSON</strong></td>
+        <td>JSON.stringify turns a value into a JSON string; JSON.parse turns a string into a JS value.</td>
+        <td><code>JSON.stringify()</code> for POST body; <code>JSON.parse()</code> for textarea; <code>JSON.stringify(data, null, 2)</code> for pretty-print</td>
+        <td>Serialising requests and parsing external input; defensive parse in try/catch.</td>
+      </tr>
+      <tr>
+        <td><strong>Number &amp; Date</strong></td>
+        <td>Parsing (parseInt, parseFloat), Date constructor and methods (toLocaleString, toISOString), toFixed for decimals.</td>
+        <td><code>parseInt(venueId, 10)</code>, <code>parseFloat()</code>, <code>new Date(s)</code>, <code>toLocaleString()</code>, <code>toFixed(2)</code>, <code>toISOString().slice(0, 16)</code> for datetime-local</td>
+        <td>Type coercion and formatting; validating dates with <code>isNaN(d.getTime())</code>; default “tomorrow 7pm”.</td>
+      </tr>
+      <tr>
+        <td><strong>const / let</strong></td>
+        <td>Block-scoped declarations; const for values that don’t change, let when reassignment is needed.</td>
+        <td><code>const API = ''</code>; <code>const r = await fetch(...)</code>; <code>let arr</code> in ETL for parse result</td>
+        <td>Block scoping; <code>const</code> by default; <code>let</code> only where reassignment is needed.</td>
+      </tr>
+      <tr>
+        <td><strong>Object shorthand</strong></td>
+        <td>In object literals, <code>{ name }</code> means <code>{ name: name }</code>.</td>
+        <td><code>JSON.stringify({ venueId: parseInt(venueId, 10), title, eventDate })</code></td>
+        <td>ES6 shorthand for <code>title: title</code>, <code>eventDate: eventDate</code>.</td>
+      </tr>
+      <tr>
+        <td><strong>Promise.all</strong></td>
+        <td>Takes an array of Promises and resolves when all resolve (or rejects if any reject).</td>
+        <td><code>loadTicketEventSummary()</code>: <code>Promise.all([fetch(...ticket-summary), fetch(...tickets)])</code></td>
+        <td>Parallel requests; wait for both before rendering the Ticket–Event table and caching tickets.</td>
+      </tr>
+      <tr>
+        <td><strong>Fallback values</strong></td>
+        <td>Using || to supply a default when the left side is falsy (null, undefined, 0, '').</td>
+        <td><code>e.City || '—'</code>, <code>parseInt(..., 10) || 1</code>, <code>data.error || 'Could not add event.'</code></td>
+        <td>Default values and safe display; handling missing or invalid input.</td>
+      </tr>
+      <tr>
+        <td><strong>XSS prevention</strong></td>
+        <td>Avoiding injection of user/API data as raw HTML; escaping via textContent then reading innerHTML.</td>
+        <td><code>escapeHtml()</code>: set <code>div.textContent = s</code>, then return <code>div.innerHTML</code></td>
+        <td>Security awareness: never inject raw user/API data into HTML; use text node to escape.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ========== BACKEND (API + DB) ========== -->
+  <h2>6. Backend – API routes and server functions</h2>
+
+  <h3>6.1 API endpoints</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Method &amp; path</th>
+        <th>Purpose</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>GET /api/venues</code></td>
+        <td>Returns all venues (Id, Name, City, Capacity) from <code>dbo.Venues</code>.</td>
+      </tr>
+      <tr>
+        <td><code>GET /api/events</code></td>
+        <td>Returns events with venue name: JOIN Events + Venues, ordered by EventDate.</td>
+      </tr>
+      <tr>
+        <td><code>GET /api/events/ticket-summary</code></td>
+        <td>Returns each event with VenueName, City, TicketCount (COUNT of tickets), TotalRevenue (SUM of Total). Uses JOIN Events + Venues + Tickets and GROUP BY. Used by the Ticket–Event module.</td>
+      </tr>
+      <tr>
+        <td><code>POST /api/events</code></td>
+        <td>Body: <code>{ venueId, title, eventDate }</code>. Validates; INSERT into Events, returns inserted row (Id, Title, etc.).</td>
+      </tr>
+      <tr>
+        <td><code>GET /api/tickets</code></td>
+        <td>Returns tickets with event title: JOIN Tickets + Events, ordered by Id DESC.</td>
+      </tr>
+      <tr>
+        <td><code>POST /api/tickets</code></td>
+        <td>Body: <code>{ eventId, customerName, quantity?, total? }</code>. INSERT into Tickets, returns inserted row.</td>
+      </tr>
+      <tr>
+        <td><code>POST /api/etl/events</code></td>
+        <td>Body: array of <code>{ venueId, title, eventDate }</code>. Normalises keys (venueId/VenueId, etc.), filters valid rows, INSERT each, returns <code>{ loaded, events }</code>.</td>
+      </tr>
+      <tr>
+        <td><code>GET /api/health</code></td>
+        <td>Runs <code>SELECT 1</code>; returns <code>{ status: 'ok', database: 'connected' }</code> or 503 with error.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>6.2 Server-side modules and functions</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Module / function</th>
+        <th>Purpose</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>db.js</code> – <code>getTicketingPool()</code></td>
+        <td>Connects to SQL Server (with retries, creates TicketingDemo if missing). Returns connection pool. Used by all routes that need DB.</td>
+      </tr>
+      <tr>
+        <td><code>db.js</code> – <code>query(text, params)</code></td>
+        <td>Gets pool, runs T-SQL with optional params, returns result. Used for GET routes (venues, events, tickets, health).</td>
+      </tr>
+      <tr>
+        <td><code>server.js</code> – <code>ensureDb()</code></td>
+        <td>On startup: checks if <code>Tickets</code> table exists; if not, runs <code>init-db</code> (schema + seed) then starts Express.</td>
+      </tr>
+      <tr>
+        <td><code>server.js</code> – static files</td>
+        <td><code>express.static</code> serves <code>frontend</code> so <code>index.html</code>, <code>styles.css</code>, and <code>app.js</code> are at <code>/</code>, <code>/styles.css</code>, <code>/app.js</code>.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>6.3 SQL / T-SQL concepts used (interview talking points)</h3>
+  <p><strong>Purpose / definition of SQL / T-SQL:</strong> SQL (Structured Query Language) is the language for managing and querying relational data. T-SQL (Transact-SQL) is Microsoft’s extension used by SQL Server. In this app, SQL/T-SQL defines the schema (Venues, Events, Tickets), reads and aggregates data for the API (SELECT, JOIN, GROUP BY), and inserts new rows safely using parameterised queries. The API runs T-SQL via the Node mssql driver.</p>
+  <p class="note">Use this table to say which SQL/T-SQL concepts you used and where. All run via the mssql driver from Node; schema and seed in <code>backend/scripts/init-db.js</code> and inline in <code>server.js</code>.</p>
+  <table>
+    <thead>
+      <tr>
+        <th>Concept</th>
+        <th>Definition</th>
+        <th>Where it’s used</th>
+        <th>What it shows</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>SELECT</strong></td>
+        <td>Statement to read data from tables; specifies columns, FROM table(s), optional WHERE and ORDER BY.</td>
+        <td>GET /api/venues (Id, Name, City, Capacity); GET /api/events; GET /api/tickets; GET /api/events/ticket-summary; GET /api/health (SELECT 1)</td>
+        <td>Reading data; column lists; ordering with ORDER BY.</td>
+      </tr>
+      <tr>
+        <td><strong>JOIN (INNER)</strong></td>
+        <td>Combines rows from two tables when the join condition matches; only rows with matches in both tables.</td>
+        <td>Events + Venues (event list with venue name); Tickets + Events (tickets with event title); ticket-summary (Events + Venues + Tickets)</td>
+        <td>Combining tables; INNER JOIN when both sides must match.</td>
+      </tr>
+      <tr>
+        <td><strong>LEFT JOIN</strong></td>
+        <td>Returns all rows from the left table and matching rows from the right; no match gives NULLs on the right.</td>
+        <td>Ticket-summary: Events LEFT JOIN Tickets so events with no sales still appear with 0 count/revenue</td>
+        <td>Include rows from left table even when right has no match; then aggregate with COUNT/SUM.</td>
+      </tr>
+      <tr>
+        <td><strong>GROUP BY</strong></td>
+        <td>Groups rows by one or more columns; non-aggregated columns in SELECT must appear in GROUP BY.</td>
+        <td>Ticket-summary: GROUP BY e.Id, e.Title, e.EventDate, e.Status, v.Name, v.City</td>
+        <td>One row per event; every non-aggregated column in SELECT must be in GROUP BY.</td>
+      </tr>
+      <tr>
+        <td><strong>Aggregate functions</strong></td>
+        <td>Functions over groups: COUNT (number of rows), SUM (total); ISNULL replaces NULL with a value.</td>
+        <td><code>COUNT(t.Id)</code> (tickets per event), <code>SUM(t.Total)</code> (revenue), <code>ISNULL(SUM(t.Total), 0)</code> for null-safe total</td>
+        <td>Summarising data; ISNULL to return 0 instead of NULL when no tickets.</td>
+      </tr>
+      <tr>
+        <td><strong>INSERT</strong></td>
+        <td>Statement to add one or more rows into a table; values can be literal or from parameters.</td>
+        <td>POST /api/events (one row); POST /api/tickets (one row); POST /api/etl/events (loop of INSERTs); seed.sql</td>
+        <td>Adding rows; parameterised via mssql <code>.input()</code> to avoid injection.</td>
+      </tr>
+      <tr>
+        <td><strong>OUTPUT clause</strong></td>
+        <td>T-SQL extension: INSERT ... OUTPUT returns the inserted (or deleted) row columns in one round-trip.</td>
+        <td>INSERT ... OUTPUT INSERTED.Id, INSERTED.Title, ... (events and tickets routes)</td>
+        <td>T-SQL way to return the inserted row (Id, etc.) in one round-trip.</td>
+      </tr>
+      <tr>
+        <td><strong>CREATE TABLE</strong></td>
+        <td>Defines a new table with column names, data types, and constraints (PK, FK).</td>
+        <td>schema.sql: Venues, Events, Tickets with IF OBJECT_ID ... IS NULL</td>
+        <td>Idempotent schema: create only if table doesn’t exist.</td>
+      </tr>
+      <tr>
+        <td><strong>IDENTITY, PRIMARY KEY, FOREIGN KEY</strong></td>
+        <td>IDENTITY: auto-increment; PRIMARY KEY: unique identifier; FOREIGN KEY: references another table’s primary key.</td>
+        <td>Id IDENTITY(1,1) PRIMARY KEY; VenueId/EventId NOT NULL with FK to parent table</td>
+        <td>Auto-increment keys; referential integrity between Venues → Events → Tickets.</td>
+      </tr>
+      <tr>
+        <td><strong>Data types</strong></td>
+        <td>Column type: INT (integer), NVARCHAR(n) (Unicode string), DATETIME2 (date/time), DECIMAL(p,s) (exact decimal).</td>
+        <td>INT, NVARCHAR(200), DATETIME2, DECIMAL(10,2)</td>
+        <td>Appropriate types: integers, Unicode text, date/time, money.</td>
+      </tr>
+      <tr>
+        <td><strong>Parameterised queries</strong></td>
+        <td>Queries where values are passed as parameters (@name) instead of concatenated strings; prevents SQL injection.</td>
+        <td><code>.input('venueId', venueId)</code>, <code>.input('title', title)</code> in server.js for INSERT</td>
+        <td>Safe from SQL injection; values passed as parameters, not concatenated.</td>
+      </tr>
+      <tr>
+        <td><strong>ORDER BY</strong></td>
+        <td>Sorts the result set by one or more columns; ASC (default) or DESC.</td>
+        <td>Events by EventDate; Venues by Name; Tickets by Id DESC; ticket-summary by EventDate</td>
+        <td>Deterministic result order for lists.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ========== QUICK REFERENCE ========== -->
+  <h2>7. Quick reference – “What do I say for…?”</h2>
+  <ul>
+    <li><strong>“What HTML/CSS/JS/SQL concepts did you use?”</strong> — See <strong>3.1 HTML concepts used</strong>, <strong>4.1 CSS concepts used</strong>, <strong>5.5 JavaScript concepts used</strong>, and <strong>6.3 SQL / T-SQL concepts used</strong> for full tables. Summary: HTML (semantic structure, forms, tables, IDs/classes); CSS (selectors, variables, flexbox, gradients, shadows, transitions, media queries, sticky); JS (async/await, Fetch, template literals, DOM, try/catch, event listeners, Esc key); SQL (SELECT, JOIN, LEFT JOIN, GROUP BY, COUNT/SUM, INSERT, OUTPUT, parameterised queries).</li>
+    <li><strong>“What’s the stack?”</strong> — Frontend: HTML, <code>styles.css</code>, Bootstrap, vanilla JS (responsive). Backend: Node.js, Express. Database: SQL Server (T-SQL via mssql). Docker Compose locally; <code>docker-compose.prod.yml</code> + nginx for EC2.</li>
+    <li><strong>“How does data get to the screen?”</strong> — JS calls <code>fetch('/api/events')</code> (etc.); Express runs T-SQL and returns JSON; JS fills table body with rows using <code>escapeHtml</code> and <code>formatDate</code>.</li>
+    <li><strong>“How is the ETL done?”</strong> — User pastes JSON in textarea; JS parses and POSTs to <code>/api/etl/events</code>; server normalises (venueId/title/eventDate), validates, INSERTs each row, returns count and inserted rows.</li>
+    <li><strong>“Security / XSS?”</strong> — We use <code>escapeHtml</code> when putting API data into the DOM so user-supplied text doesn’t run as HTML.</li>
+    <li><strong>“Why sticky headers?”</strong> — Tables are in a scrollable box (max-height 280px); sticky <code>thead th</code> keeps column titles visible while scrolling.</li>
+    <li><strong>“What’s the Ticket–Event module?”</strong> — Shows events with tickets sold and revenue from <code>GET /api/events/ticket-summary</code> (SQL: JOIN Events, Venues, Tickets; GROUP BY event; COUNT/SUM). “View tickets” filters the cached ticket list by EventId to show per-event sales. Close via button or <strong>Esc</strong>. Each section has a refresh button.</li>
+    <li><strong>“Success popups?”</strong> — After Add event and Sell ticket, <code>showSuccessToast(title, message)</code> appends a toast to <code>#toast-container</code>; it auto-removes after 4 seconds. Styling in <code>styles.css</code>.</li>
+  </ul>
+
+  <p class="note" style="margin-top: 24px;"><strong>To save as PDF:</strong> Open this file in a browser → Ctrl+P (or Cmd+P) → choose “Save as PDF” (or “Microsoft Print to PDF”) → Save.</p>
+
+</body>
+</html>

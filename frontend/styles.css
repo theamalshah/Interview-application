@@ -1,0 +1,352 @@
+/**
+ * Ticketing demo – main styles
+ * Sections: variables, base, navbar, hero, cards, tables, buttons, import panel,
+ * toasts, form focus, ticket-event module, responsive (tablet / mobile / small mobile).
+ */
+
+/* ========== Variables (theme; change here to tweak colours/shadows) ========== */
+:root {
+  --nav-bg: #0f2744;
+  --nav-gradient: linear-gradient(135deg, #1a365d 0%, #0f2744 100%);
+  --hero-from: #e0f2fe;
+  --hero-to: #ccfbf1;
+  --hero-border: #7dd3fc;
+  --accent: #0284c7;
+  --accent-soft: rgba(2, 132, 199, 0.12);
+  --card-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  --card-shadow-hover: 0 8px 28px rgba(0, 0, 0, 0.1);
+  --section-desc: #64748b;
+  --import-bg: linear-gradient(145deg, #f1f5f9 0%, #e2e8f0 100%);
+  --success-bg: #bbf7d0;
+  --success-border: #22c55e;
+  --success-icon: #15803d;
+  --toast-shadow: 0 12px 48px rgba(0, 0, 0, 0.18);
+}
+
+/* ========== Base ========== */
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: linear-gradient(165deg, #f1f5f9 0%, #e2e8f0 50%, #cbd5e1 100%);
+  background-attachment: fixed;
+  min-height: 100vh;
+  color: #1e293b;
+}
+
+/* ========== Navbar ========== */
+.navbar {
+  background: var(--nav-gradient) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+.navbar-brand {
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: #fff !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+.navbar-brand i {
+  opacity: 1;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.2));
+}
+
+/* ========== Hero (intro block) ========== */
+.hero {
+  background: linear-gradient(135deg, var(--hero-from) 0%, var(--hero-to) 100%);
+  border-radius: 16px;
+  padding: 28px 32px;
+  margin-bottom: 28px;
+  border: 1px solid var(--hero-border);
+  box-shadow: 0 4px 20px rgba(2, 132, 199, 0.12);
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -20%;
+  width: 60%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255,255,255,0.4) 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero h1 {
+  color: #0f172a;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  position: relative;
+}
+.hero p { position: relative; }
+
+/* ========== Stats strip (counts) ========== */
+.stats-strip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding: 12px 20px;
+  background: linear-gradient(180deg, #fff 0%, #f8fafc 100%);
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  font-size: 0.95rem;
+  color: #475569;
+}
+.stats-item strong { color: var(--accent); margin-right: 0.2rem; }
+.stats-divider { color: #cbd5e1; font-weight: 300; user-select: none; }
+
+.btn-refresh {
+  padding: 4px 8px;
+  border-radius: 8px;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+.btn-refresh:hover { transform: rotate(-90deg); color: var(--accent) !important; }
+
+/* ========== Cards (events, venues, tickets, forms) ========== */
+.card {
+  border: none;
+  border-radius: 16px;
+  box-shadow: var(--card-shadow);
+  transition: box-shadow 0.25s ease, transform 0.25s ease;
+  overflow: hidden;
+  background: #fff;
+}
+.card:hover {
+  box-shadow: var(--card-shadow-hover);
+  transform: translateY(-2px);
+}
+.card-header {
+  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%) !important;
+  border-bottom: 2px solid #e2e8f0;
+  padding: 16px 22px;
+  font-weight: 700;
+  border-radius: 0;
+  letter-spacing: 0.02em;
+}
+.card-header h2 {
+  color: #0f172a;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+}
+.card-header h2 i {
+  color: var(--accent);
+  margin-right: 0.5rem;
+  font-size: 1.1em;
+}
+.card-body { padding: 22px; }
+.section-desc {
+  color: var(--section-desc);
+  font-size: 0.9rem;
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+/* ========== Tables (scrollable; sticky header so headers stay visible) ========== */
+.table-scroll {
+  max-height: 280px;
+  overflow-y: auto;
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.8);
+}
+.table-scroll thead th {
+  position: sticky;
+  top: 0;
+  background: linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%);
+  z-index: 1;
+  box-shadow: 0 2px 0 #cbd5e1;
+  font-weight: 700;
+  color: #475569;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 14px 16px;
+}
+.table-hover tbody tr {
+  transition: background-color 0.15s ease;
+}
+.table-hover tbody tr:hover { background-color: var(--accent-soft); }
+.table tbody tr:nth-child(even) { background-color: #fafafa; }
+.table tbody tr:nth-child(even):hover { background-color: var(--accent-soft); }
+.table td { padding: 12px 16px; vertical-align: middle; }
+.badge.bg-success {
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%) !important;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 6px;
+}
+
+/* ========== Buttons ========== */
+.btn-primary {
+  font-weight: 600;
+  background: linear-gradient(180deg, #0ea5e9 0%, #0284c7 100%) !important;
+  border: none !important;
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.35);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+.btn-primary:hover {
+  box-shadow: 0 4px 16px rgba(2, 132, 199, 0.45);
+  transform: translateY(-1px);
+}
+.btn-outline-primary {
+  font-weight: 600;
+  border-width: 2px;
+  transition: all 0.2s ease;
+}
+.btn-outline-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25);
+}
+
+/* ========== Import (ETL) panel ========== */
+.import-panel {
+  background: var(--import-bg);
+  border-radius: 14px;
+  padding: 22px;
+  border: 1px solid #cbd5e1;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.8);
+}
+
+/* ========== Success toasts (fixed top-right; app.js appends here) ========== */
+.toast-container {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  pointer-events: none;
+}
+.toast-success {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 20px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: var(--toast-shadow);
+  border-left: 4px solid var(--success-border);
+  pointer-events: auto;
+  animation: toastSlideIn 0.35s ease-out;
+  min-width: 320px;
+  max-width: 420px;
+}
+.toast-success .toast-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--success-bg);
+  color: var(--success-icon);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.35rem;
+  flex-shrink: 0;
+}
+.toast-success .toast-body { flex: 1; }
+.toast-success .toast-title { font-weight: 600; color: #1a202c; margin-bottom: 2px; }
+.toast-success .toast-message { font-size: 0.9rem; color: #4a5568; }
+@keyframes toastSlideIn {
+  from { opacity: 0; transform: translateX(100%); }
+  to { opacity: 1; transform: translateX(0); }
+}
+.toast-success.toast-out { animation: toastSlideOut 0.3s ease-in forwards; }
+@keyframes toastSlideOut {
+  to { opacity: 0; transform: translateX(100%); }
+}
+
+/* ========== Form focus (accessibility + visual feedback) ========== */
+.form-control,
+.form-select {
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.form-label { font-weight: 600; color: #334155; }
+
+/* ========== Ticket–event module (View tickets button + detail panel) ========== */
+.ticket-event-module .btn-view-tickets {
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+.ticket-event-module .btn-view-tickets:hover {
+  transform: translateY(-1px);
+}
+.ticket-event-detail {
+  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+  border-radius: 12px;
+  padding: 18px;
+  border: 1px solid #e2e8f0;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.9);
+}
+.ticket-event-detail h3 { color: #0f172a; font-weight: 700; }
+
+/* ========== Responsive: tablet (≤992px) ========== */
+@media (max-width: 991.98px) {
+  .hero { padding: 20px; margin-bottom: 20px; }
+  .card-body { padding: 16px; }
+  .card-header { padding: 12px 16px; }
+  .table-scroll { max-height: 240px; }
+  .table-scroll thead th, .table td { padding: 10px 12px; font-size: 0.75rem; }
+  .table-scroll thead th { font-size: 0.7rem; }
+}
+
+/* ========== Responsive: mobile (≤768px) ========== */
+@media (max-width: 767.98px) {
+  body { font-size: 0.95rem; }
+  .container { padding-left: 12px; padding-right: 12px; }
+  .hero { padding: 16px; margin-bottom: 16px; border-radius: 12px; }
+  .hero::before { display: none; }
+  .hero h1 { font-size: 1.1rem; }
+  .card { border-radius: 12px; }
+  .card:hover { transform: none; }
+  .card-body { padding: 14px; }
+  .card-header { padding: 10px 14px; }
+  .card-header h2, .card-body .h6 { font-size: 0.95rem; }
+  .section-desc { font-size: 0.85rem; }
+  /* Smooth scroll on touch devices */
+  .table-scroll { max-height: 200px; -webkit-overflow-scrolling: touch; }
+  .table-scroll thead th, .table td { padding: 8px 10px; font-size: 0.8rem; }
+  .table-scroll thead th { font-size: 0.65rem; white-space: nowrap; }
+  .navbar-brand { font-size: 1rem; }
+  .ticket-event-detail { padding: 12px; }
+  .ticket-event-detail .d-flex { flex-wrap: wrap; gap: 8px; }
+  .ticket-event-detail h3 { font-size: 0.95rem; word-break: break-word; }
+  .ticket-event-module .btn-view-tickets { font-size: 0.75rem; padding: 4px 8px; }
+  .import-panel { padding: 14px; }
+  .import-panel .form-control { font-size: 0.8rem; }
+  .import-panel pre { font-size: 0.75rem; max-height: 120px; }
+}
+
+/* ========== Responsive: small mobile (≤576px) – toasts full width, 44px tap targets ========== */
+@media (max-width: 575.98px) {
+  /* Toasts: full width so they don’t overflow narrow screens */
+  .toast-container { top: 12px; left: 12px; right: 12px; margin: 0; align-items: stretch; }
+  .toast-success { min-width: 0; max-width: none; width: 100%; padding: 14px 16px; }
+  .toast-success .toast-icon { width: 40px; height: 40px; font-size: 1.2rem; }
+  .toast-success .toast-message { font-size: 0.85rem; }
+  /* Minimum 44px height for touch (accessibility) */
+  .btn { min-height: 44px; padding-top: 10px; padding-bottom: 10px; }
+  .form-control, .form-select { min-height: 44px; }
+  #ticket-event-detail-close {
+    min-width: 44px; min-height: 44px;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+}
+
+/* Footer note spacing */
+.small.text-muted.mt-4 { padding-bottom: 2rem; }
+
+/* Required field asterisk */
+.form-label .text-danger { font-weight: 700; }

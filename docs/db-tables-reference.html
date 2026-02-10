@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Database Tables – Fields, Types &amp; Examples</title>
+  <style>
+    @media print {
+      .no-print { display: none !important; }
+      body { font-size: 10pt; }
+      table { page-break-inside: avoid; }
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 24px;
+      background: #fff;
+      color: #1a1a1a;
+      line-height: 1.4;
+    }
+    .no-print {
+      background: #e6f3ff;
+      border: 1px solid #2b6cb0;
+      padding: 10px 14px;
+      margin-bottom: 20px;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+    h1 {
+      color: #1a365d;
+      border-bottom: 2px solid #2b6cb0;
+      padding-bottom: 6px;
+      font-size: 1.4em;
+    }
+    h2 {
+      color: #2d3748;
+      font-size: 1.1em;
+      margin-top: 24px;
+      margin-bottom: 8px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 8px 0 20px;
+      font-size: 14px;
+    }
+    th, td {
+      border: 1px solid #cbd5e0;
+      padding: 10px 12px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      background: #edf2f7;
+      font-weight: 600;
+    }
+    .tbl-name { background: #2b6cb0; color: #fff; font-weight: 600; }
+    .type { font-family: Consolas, monospace; font-size: 0.9em; color: #055; }
+    .example { font-family: Consolas, monospace; font-size: 0.9em; color: #b45309; }
+    .desc { color: #4a5568; font-size: 0.9em; }
+    .pk { font-weight: 600; }
+    .fk { color: #2b6cb0; }
+  </style>
+</head>
+<body>
+
+  <p class="no-print"><strong>Save as PDF:</strong> Ctrl+P → Save as PDF / Microsoft Print to PDF</p>
+
+  <h1>Database tables – fields, data types &amp; example values</h1>
+  <p><strong>Database:</strong> TicketingDemo (SQL Server). Use this to explain each table and column in the interview.</p>
+
+  <h2>1. Venues</h2>
+  <p class="desc">Where events take place (stadium, theatre, arena).</p>
+  <table>
+    <thead>
+      <tr>
+        <th style="width:18%">Field</th>
+        <th style="width:22%">Data type</th>
+        <th style="width:25%">Example value</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="pk">Id</td>
+        <td class="type">INT IDENTITY(1,1)</td>
+        <td class="example">1</td>
+        <td class="desc">Primary key; auto-increment.</td>
+      </tr>
+      <tr>
+        <td>Name</td>
+        <td class="type">NVARCHAR(200)</td>
+        <td class="example">Grand Arena</td>
+        <td class="desc">Venue name. NOT NULL.</td>
+      </tr>
+      <tr>
+        <td>City</td>
+        <td class="type">NVARCHAR(100)</td>
+        <td class="example">London</td>
+        <td class="desc">City where the venue is located.</td>
+      </tr>
+      <tr>
+        <td>Capacity</td>
+        <td class="type">INT</td>
+        <td class="example">20000</td>
+        <td class="desc">Maximum capacity (e.g. seats).</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>2. Events</h2>
+  <p class="desc">A concert, game, or show at a venue, on a given date.</p>
+  <table>
+    <thead>
+      <tr>
+        <th style="width:18%">Field</th>
+        <th style="width:22%">Data type</th>
+        <th style="width:25%">Example value</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="pk">Id</td>
+        <td class="type">INT IDENTITY(1,1)</td>
+        <td class="example">1</td>
+        <td class="desc">Primary key; auto-increment.</td>
+      </tr>
+      <tr>
+        <td class="fk">VenueId</td>
+        <td class="type">INT NOT NULL</td>
+        <td class="example">1</td>
+        <td class="desc">Foreign key → Venues.Id. Which venue hosts this event.</td>
+      </tr>
+      <tr>
+        <td>Title</td>
+        <td class="type">NVARCHAR(300)</td>
+        <td class="example">Summer Music Festival 2026</td>
+        <td class="desc">Event name. NOT NULL.</td>
+      </tr>
+      <tr>
+        <td>EventDate</td>
+        <td class="type">DATETIME2</td>
+        <td class="example">2026-07-15 19:00:00</td>
+        <td class="desc">When the event takes place. NOT NULL.</td>
+      </tr>
+      <tr>
+        <td>Status</td>
+        <td class="type">NVARCHAR(20)</td>
+        <td class="example">OnSale</td>
+        <td class="desc">e.g. OnSale, SoldOut, Cancelled. Default: OnSale.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>3. Tickets</h2>
+  <p class="desc">A ticket sale (booking) for an event: customer, quantity, total amount.</p>
+  <table>
+    <thead>
+      <tr>
+        <th style="width:18%">Field</th>
+        <th style="width:22%">Data type</th>
+        <th style="width:25%">Example value</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="pk">Id</td>
+        <td class="type">INT IDENTITY(1,1)</td>
+        <td class="example">1</td>
+        <td class="desc">Primary key; auto-increment.</td>
+      </tr>
+      <tr>
+        <td class="fk">EventId</td>
+        <td class="type">INT NOT NULL</td>
+        <td class="example">1</td>
+        <td class="desc">Foreign key → Events.Id. Which event this ticket is for.</td>
+      </tr>
+      <tr>
+        <td>CustomerName</td>
+        <td class="type">NVARCHAR(200)</td>
+        <td class="example">Alex Smith</td>
+        <td class="desc">Name of the customer who bought the ticket(s).</td>
+      </tr>
+      <tr>
+        <td>Quantity</td>
+        <td class="type">INT NOT NULL</td>
+        <td class="example">2</td>
+        <td class="desc">Number of tickets. Default: 1.</td>
+      </tr>
+      <tr>
+        <td>Total</td>
+        <td class="type">DECIMAL(10,2) NOT NULL</td>
+        <td class="example">149.98</td>
+        <td class="desc">Total amount paid (e.g. in GBP).</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>Relationship summary</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Table</th>
+        <th>Links to</th>
+        <th>Meaning</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Venues</td><td>—</td><td>Standalone; no parent table.</td></tr>
+      <tr><td>Events</td><td>VenueId → Venues.Id</td><td>Each event is at one venue.</td></tr>
+      <tr><td>Tickets</td><td>EventId → Events.Id</td><td>Each ticket is for one event.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>4. API usage: events &amp; ticket summary (GROUP BY)</h2>
+  <p class="desc">The endpoint <code>GET /api/events/ticket-summary</code> returns one row per event with aggregated ticket counts and revenue. It JOINs Events, Venues, and Tickets, then <strong>GROUP BY</strong> event so you get <strong>TicketCount</strong> (COUNT of tickets) and <strong>TotalRevenue</strong> (SUM of ticket Total). Events with no tickets still appear (LEFT JOIN on Tickets) with 0 count and 0 revenue. This powers the “Events &amp; ticket sales” module in the frontend.</p>
+
+  <h3>4.1 T-SQL used</h3>
+  <pre style="background:#f7fafc; border:1px solid #e2e8f0; border-radius:6px; padding:14px; font-size:12px; overflow-x:auto; margin:8px 0 16px;">SELECT e.Id, e.Title, e.EventDate, e.Status,
+       v.Name AS VenueName, v.City,
+       COUNT(t.Id) AS TicketCount,
+       ISNULL(SUM(t.Total), 0) AS TotalRevenue
+FROM dbo.Events e
+INNER JOIN dbo.Venues v ON e.VenueId = v.Id
+LEFT JOIN dbo.Tickets t ON t.EventId = e.Id
+GROUP BY e.Id, e.Title, e.EventDate, e.Status, v.Name, v.City
+ORDER BY e.EventDate</pre>
+
+  <h3>4.2 Result columns (ticket-summary)</h3>
+  <table>
+    <thead>
+      <tr>
+        <th style="width:20%">Column</th>
+        <th style="width:22%">Source / type</th>
+        <th style="width:25%">Example</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Id</td><td class="type">Events.Id</td><td class="example">1</td><td class="desc">Event primary key.</td></tr>
+      <tr><td>Title</td><td class="type">Events.Title</td><td class="example">Summer Music Festival 2026</td><td class="desc">Event name.</td></tr>
+      <tr><td>EventDate</td><td class="type">Events.EventDate</td><td class="example">2026-07-15 19:00:00</td><td class="desc">When the event takes place.</td></tr>
+      <tr><td>Status</td><td class="type">Events.Status</td><td class="example">OnSale</td><td class="desc">e.g. OnSale, SoldOut, Cancelled.</td></tr>
+      <tr><td>VenueName</td><td class="type">Venues.Name (AS VenueName)</td><td class="example">Grand Arena</td><td class="desc">From JOIN with Venues.</td></tr>
+      <tr><td>City</td><td class="type">Venues.City</td><td class="example">London</td><td class="desc">Venue city.</td></tr>
+      <tr><td><strong>TicketCount</strong></td><td class="type">COUNT(t.Id)</td><td class="example">12</td><td class="desc">Number of ticket rows for this event (aggregate from GROUP BY).</td></tr>
+      <tr><td><strong>TotalRevenue</strong></td><td class="type">ISNULL(SUM(t.Total), 0)</td><td class="example">899.88</td><td class="desc">Sum of Tickets.Total for this event; 0 when no tickets (LEFT JOIN).</td></tr>
+    </tbody>
+  </table>
+  <p class="desc"><strong>GROUP BY</strong> list: <code>e.Id, e.Title, e.EventDate, e.Status, v.Name, v.City</code> — every non-aggregated column in the SELECT must appear in GROUP BY. <code>COUNT(t.Id)</code> and <code>SUM(t.Total)</code> are the only aggregates.</p>
+
+</body>
+</html>

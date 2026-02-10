@@ -1,0 +1,17 @@
+# Keep build context small for EC2; Dockerfile only needs backend/ and frontend/
+.git
+.gitignore
+.env
+.env.*
+!.env.example
+node_modules
+backend/node_modules
+**/node_modules
+data
+docs
+*.md
+!backend/scripts/*.md
+.cursor
+.vscode
+*.log
+.dockerignore

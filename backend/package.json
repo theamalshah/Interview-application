@@ -1,0 +1,14 @@
+{
+  "name": "interview-ticketing-api",
+  "version": "1.0.0",
+  "description": "Demo API: Node.js, T-SQL, SQL Server, ETL - Technical Solutions Expert skills",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "init-db": "node scripts/init-db.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "mssql": "^10.0.1"
+  }
+}

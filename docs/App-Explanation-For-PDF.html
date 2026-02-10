@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interview Application – Overview &amp; Explanation</title>
+  <style>
+    @media print {
+      body { font-size: 10pt; }
+      .no-print { display: none !important; }
+      .page-break { page-break-before: always; }
+      h2 { page-break-after: avoid; }
+      table, .card { page-break-inside: avoid; }
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      line-height: 1.5;
+      color: #1a1a1a;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 28px;
+      background: #fff;
+    }
+    .no-print {
+      background: #e6f3ff;
+      border: 1px solid #2b6cb0;
+      padding: 12px 16px;
+      margin-bottom: 20px;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+    h1 {
+      color: #1a365d;
+      border-bottom: 2px solid #2b6cb0;
+      padding-bottom: 8px;
+      font-size: 1.6em;
+      margin-top: 0;
+    }
+    h2 {
+      color: #2d3748;
+      font-size: 1.2em;
+      margin-top: 24px;
+      margin-bottom: 10px;
+    }
+    h3 { color: #2b6cb0; font-size: 1.05em; margin-top: 14px; }
+    p { margin: 0.4em 0 0.6em; }
+    ul, ol { margin: 0.4em 0; padding-left: 1.4em; }
+    li { margin: 0.2em 0; }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin: 10px 0;
+      font-size: 0.95em;
+    }
+    th, td {
+      border: 1px solid #cbd5e0;
+      padding: 8px 10px;
+      text-align: left;
+    }
+    th { background: #edf2f7; font-weight: 600; }
+    .card {
+      background: #f7fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 14px 18px;
+      margin: 12px 0;
+    }
+    .summary-box {
+      background: #ebf8ff;
+      border-left: 4px solid #2b6cb0;
+      padding: 14px 18px;
+      margin: 16px 0;
+    }
+    code { background: #edf2f7; padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
+    small { color: #4a5568; font-size: 0.9em; }
+  </style>
+</head>
+<body>
+
+  <p class="no-print"><strong>Save as PDF:</strong> Press <kbd>Ctrl+P</kbd> → choose <strong>Save as PDF</strong> or <strong>Microsoft Print to PDF</strong> → Save.</p>
+
+  <h1>Interview Application – Overview &amp; Explanation</h1>
+  <p><strong>Purpose:</strong> A small, deployable demo built to show the skills needed for the <strong>AudienceView Technical Solutions Expert</strong> role. It mimics a <strong>live-events ticketing</strong> system and runs entirely in <strong>Docker</strong>.</p>
+
+  <div class="summary-box">
+    <strong>In one sentence:</strong> The app is a ticketing-style demo with a <strong>responsive</strong> web UI (HTML, <code>styles.css</code>, Bootstrap, vanilla JS), a Node.js API, and a SQL Server database—all started with one Docker command—so you can show SQL Server, T-SQL, Node.js, ETL, and Docker in a single project.
+  </div>
+
+  <h2>1. What the app does</h2>
+  <ul>
+    <li>Shows a <strong>stats strip</strong> below the hero: “X events · Y venues · Z tickets” (counts update when data loads).</li>
+    <li>Shows a list of <strong>events</strong> (e.g. concerts, games) with their <strong>venues</strong> and <strong>dates</strong>; each section has a <strong>refresh</strong> button.</li>
+    <li>Shows <strong>Events &amp; ticket sales</strong>: each event with tickets sold and revenue (API: JOIN + GROUP BY); “View tickets” expands to show customer, quantity, total per event; close via button or <strong>Esc</strong>.</li>
+    <li>Shows <strong>venues</strong> (name, city, capacity) and <strong>tickets</strong> (event, customer, quantity, total).</li>
+    <li>Lets you <strong>add an event</strong> and <strong>sell a ticket</strong>; success shows a <strong>toast popup</strong> and refreshes the lists.</li>
+    <li>Lets you <strong>load more events via ETL</strong>: paste a JSON array, click Run ETL; the API validates, transforms, and inserts into SQL Server.</li>
+  </ul>
+  <p>Everything is read from and written to a <strong>SQL Server</strong> database named <strong>TicketingDemo</strong>, created and filled automatically on first run. The frontend uses <strong>styles.css</strong> for layout, cards, tables, stats strip, refresh buttons, success toasts, the ticket–event module, and <strong>responsive design</strong> (tablet and mobile breakpoints, touch-friendly controls).</p>
+
+  <h2>2. How it's built (architecture)</h2>
+  <p>Three parts: <strong>Frontend</strong> (HTML, <code>styles.css</code>, Bootstrap, JavaScript — responsive, single page), <strong>API</strong> (Node.js, Express, T-SQL; endpoints for events, venues, tickets, <code>/api/events/ticket-summary</code>, ETL), <strong>Database</strong> (SQL Server, Venues, Events, Tickets). Local: <code>docker-compose up -d</code> → http://localhost:3000. EC2: <code>docker-compose -f docker-compose.prod.yml --env-file .env up -d --build</code> (see DEPLOY-EC2.md).</p>
+
+  <h2>3. How to run it</h2>
+  <p><strong>Local (Docker):</strong></p>
+  <ol>
+    <li>Open a terminal in the <strong>Interview application</strong> folder.</li>
+    <li>Run: <code>docker-compose up -d</code></li>
+    <li>Wait ~30–45 seconds the first time.</li>
+    <li>Open in a browser: <strong>http://localhost:3000</strong></li>
+  </ol>
+  <p>To stop: <code>docker-compose down</code></p>
+  <p><strong>Production (EC2):</strong> Copy or clone the project to the server, create <code>.env</code> from <code>.env.example</code>, then run <code>docker-compose -f docker-compose.prod.yml --env-file .env up -d --build</code>. App is on port 80. Full steps in <strong>DEPLOY-EC2.md</strong>.</p>
+
+  <p style="margin-top: 24px; color: #718096; font-size: 0.9em;">Interview Application – Technical Solutions Expert demo. Save as PDF: Ctrl+P → Save as PDF.</p>
+
+</body>
+</html>

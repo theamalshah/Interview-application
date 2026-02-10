@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interview Application – System Flow</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 24px;
+      background: #f8fafc;
+      color: #1a1a1a;
+    }
+    h1 {
+      color: #1a365d;
+      border-bottom: 2px solid #2b6cb0;
+      padding-bottom: 8px;
+    }
+    h2 {
+      color: #2d3748;
+      font-size: 1.15em;
+      margin-top: 32px;
+      margin-bottom: 12px;
+    }
+    .diagram {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 24px;
+      margin: 16px 0;
+      overflow-x: auto;
+    }
+    .mermaid { text-align: center; }
+    .note {
+      background: #edf2f7;
+      border-left: 4px solid #2b6cb0;
+      padding: 12px 16px;
+      margin: 16px 0;
+      font-size: 14px;
+    }
+    @media print {
+      body { background: #fff; }
+      .diagram { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Interview Application – System Flow</h1>
+  <p>Use these diagrams to explain how the ticketing demo works end-to-end. Open in a browser; you can print or save as PDF.</p>
+
+  <h2>1. Overall architecture</h2>
+  <p class="note">User in browser → Node API → SQL Server. DB data is stored on your machine in <code>./data/sqlserver</code> (persists when you run <code>docker-compose down</code>).</p>
+  <div class="diagram">
+    <div class="mermaid">
+flowchart LR
+  subgraph User
+    A[User / Browser]
+  end
+
+  subgraph Docker["Docker Compose"]
+    subgraph Frontend
+      B[HTML / CSS / Bootstrap\nJavaScript]
+    end
+    subgraph API["Node.js API (Express)"]
+      C[GET /api/events\nGET /api/events/ticket-summary\nGET /api/venues\nGET /api/tickets\nGET /api/health\nPOST /api/events\nPOST /api/tickets\nPOST /api/etl/events]
+    end
+    subgraph DB["SQL Server 2022"]
+      D[(TicketingDemo\nVenues · Events · Tickets)]
+    end
+  end
+
+  subgraph Host["Your machine (host)"]
+    H[(./data/sqlserver\nDB files stored here)]
+  end
+
+  A -->|"http://localhost:3000"| B
+  B -->|"fetch() API calls"| C
+  C -->|"T-SQL (mssql driver)"| D
+  D -->|"JSON result"| C
+  C -->|"JSON response"| B
+  DB -->|"volume mount"| H
+    </div>
+  </div>
+
+  <h2>2. Request flow (e.g. list events)</h2>
+  <p class="note">Step-by-step when the user opens the page or refreshes: frontend loads <code>index.html</code>, <code>styles.css</code>, <code>app.js</code>; JS calls the API (e.g. <code>/api/events</code>, <code>/api/events/ticket-summary</code>, <code>/api/venues</code>, <code>/api/tickets</code>); API runs T-SQL and returns JSON; JS updates the DOM (tables, stats strip). Per-section refresh buttons re-call the corresponding load; success actions (Add event, Sell ticket) show a toast and refresh data. Ticket detail panel closes via button or Esc.</p>
+  <div class="diagram">
+    <div class="mermaid">
+flowchart TD
+  A[User opens page\nlocalhost:3000] --> B[Browser loads\nindex.html + app.js]
+  B --> C[app.js: fetch /api/events]
+  C --> D[Express receives\nGET /api/events]
+  D --> E[query: SELECT with JOIN\nEvents + Venues]
+  E --> F[SQL Server\nruns T-SQL]
+  F --> G[Result set → JSON]
+  G --> H[Response to browser]
+  H --> I[app.js updates table\nin the DOM]
+  I --> J[User sees events list]
+    </div>
+  </div>
+
+  <h2>3. ETL flow (load events from JSON)</h2>
+  <p class="note">POST /api/etl/events: extract (JSON body), transform (validate, normalize), load (INSERT into Events).</p>
+  <div class="diagram">
+    <div class="mermaid">
+flowchart TD
+  A[User clicks Run ETL\nwith JSON payload] --> B[POST /api/etl/events\nbody: array of events]
+  B --> C[API: parse JSON]
+  C --> D{Valid?\nvenueId, title, eventDate}
+  D -->|No| E[Skip row or 400 error]
+  D -->|Yes| F[Transform: normalize\nvenueId, title, date]
+  F --> G[INSERT INTO Events\nOUTPUT inserted row]
+  G --> H[SQL Server\nwrites to Events table]
+  H --> I[API returns\nloaded count + rows]
+  I --> J[Frontend shows result\nand refreshes events list]
+    </div>
+  </div>
+
+  <h2>4. Startup &amp; database init</h2>
+  <p class="note">Run <code>docker-compose up -d</code>. API waits for SQL Server, creates DB and tables, seeds sample data, then serves the app at http://localhost:3000.</p>
+  <div class="diagram">
+    <div class="mermaid">
+flowchart TD
+  A[docker-compose up -d] --> B[SQL Server container starts]
+  A --> C[API container builds &amp; starts]
+  C --> D[API: getTicketingPool]
+  D --> E{SQL Server\nreachable?}
+  E -->|No| F[Retry every 2s\nup to 40 attempts]
+  F --> E
+  E -->|Yes| G[Connect to master\nCREATE DATABASE TicketingDemo]
+  G --> H[Connect to TicketingDemo]
+  H --> I{Tickets table\nexists?}
+  I -->|No| J[Run schema.sql\nVenues, Events, Tickets]
+  J --> K[Run seed.sql\nsample data]
+  K --> L[Start Express\nlisten :3000]
+  I -->|Yes| L
+  L --> M[Serve frontend\nhttp://localhost:3000]
+    </div>
+  </div>
+
+  <h2>5. Data model (tables)</h2>
+  <p class="note">Venues → Events → Tickets. Each event is at a venue; each ticket is for an event (customer, quantity, total). The <strong>Ticket–Event</strong> module uses <code>GET /api/events/ticket-summary</code>, which JOINs Events, Venues, and Tickets and uses <strong>GROUP BY</strong> (e.Id, e.Title, e.EventDate, e.Status, v.Name, v.City) with <strong>COUNT(t.Id)</strong> and <strong>SUM(t.Total)</strong> to return TicketCount and TotalRevenue per event.</p>
+  <div class="diagram">
+    <div class="mermaid">
+flowchart LR
+  subgraph Venues
+    V[Venues\nId, Name, City, Capacity]
+  end
+  subgraph Events
+    E[Events\nId, VenueId, Title, EventDate, Status]
+  end
+  subgraph Tickets
+    T[Tickets\nId, EventId, CustomerName, Quantity, Total]
+  end
+
+  V -->|VenueId FK| E
+  E -->|EventId FK| T
+    </div>
+  </div>
+
+  <h2>6. Ticket-summary flow (GROUP BY)</h2>
+  <p class="note">No extra table: the API runs a single query that JOINs the three tables and aggregates. LEFT JOIN on Tickets so events with no sales still appear with TicketCount = 0 and TotalRevenue = 0.</p>
+  <div class="diagram">
+    <div class="mermaid">
+flowchart LR
+  subgraph Tables
+    E[Events]
+    V[Venues]
+    T[Tickets]
+  end
+  subgraph Query
+    J[JOIN E + V + T\nLEFT JOIN T]
+    G[GROUP BY event\nCOUNT, SUM]
+  end
+  subgraph Result
+    R[Per-event rows\nId, Title, VenueName, City\nTicketCount, TotalRevenue]
+  end
+
+  E --> J
+  V --> J
+  T --> J
+  J --> G
+  G --> R
+    </div>
+  </div>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'neutral',
+      flowchart: { useMaxWidth: true, htmlLabels: true, curve: 'basis' }
+    });
+  </script>
+
+</body>
+</html>
