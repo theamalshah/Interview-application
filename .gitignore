@@ -8,3 +8,4 @@ data/sqlserver/
 
 # SSL private keys (use ssl/cert.pem and ssl/key.pem for production)
 backend/ssl/
+ssl/*.pem
