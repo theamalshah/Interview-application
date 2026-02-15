@@ -1,11 +1,14 @@
 // Ticketing API – Express, T-SQL, SQL Server. Serves frontend + REST (events, venues, tickets, ETL).
 const express = require('express');
+const https = require('https');
 const path = require('path');
 const fs = require('fs');
+const selfsigned = require('selfsigned');
 const { getTicketingPool, query } = require('./db');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 80;
+const HTTPS_PORT = parseInt(process.env.HTTPS_PORT || '443', 10);
 
 app.use(express.json());
 const frontendPath = path.join(__dirname, 'frontend');
@@ -191,10 +194,33 @@ async function ensureDb() {
   }
 }
 
+// Load SSL cert/key from ssl/ or generate a self-signed cert for dev
+function getHttpsOptions() {
+  const sslDir = path.join(__dirname, 'ssl');
+  const keyPath = path.join(sslDir, 'key.pem');
+  const certPath = path.join(sslDir, 'cert.pem');
+  if (fs.existsSync(keyPath) && fs.existsSync(certPath)) {
+    return {
+      key: fs.readFileSync(keyPath),
+      cert: fs.readFileSync(certPath),
+    };
+  }
+  const attrs = [{ name: 'commonName', value: 'localhost' }];
+  const opts = { keySize: 2048, days: 365, algorithm: 'sha256' };
+  const pems = selfsigned.generate(attrs, opts);
+  return { key: pems.private, cert: pems.cert };
+}
+
 ensureDb()
   .then(() => {
     app.listen(PORT, '0.0.0.0', () => {
-      console.log(`Interview API running on http://0.0.0.0:${PORT}`);
+      console.log(`Interview API (HTTP) running on http://0.0.0.0:${PORT}`);
+    });
+
+    const httpsOpts = getHttpsOptions();
+    const httpsServer = https.createServer(httpsOpts, app);
+    httpsServer.listen(HTTPS_PORT, '0.0.0.0', () => {
+      console.log(`Interview API (HTTPS) running on https://0.0.0.0:${HTTPS_PORT}`);
     });
   })
   .catch((err) => {

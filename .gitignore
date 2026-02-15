@@ -5,3 +5,6 @@ node_modules/
 
 # SQL Server data (stored locally in project; do not commit)
 data/sqlserver/
+
+# SSL private keys (use ssl/cert.pem and ssl/key.pem for production)
+backend/ssl/
